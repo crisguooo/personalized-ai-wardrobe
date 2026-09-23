@@ -1,0 +1,13 @@
+Use case: product-mockup.
+Asset type: original wardrobe sprite atlas for a fashion application.
+Create a single square 1536 x 1536 image (or the highest available square resolution) containing EXACTLY 36 separate fashion catalog cutouts arranged in a mathematically regular 6-column by 6-row contact sheet. The full canvas is pure white. Each invisible cell occupies exactly one sixth of image width and height. Each item is centered on its own cell center and contained within the central 70% of its cell, leaving at least 15% clean white margin on all sides. Equal-width columns and equal-height rows, no outer padding beyond those cell margins. No visible grid lines.
+Style: cohesive elegant hand-painted fashion catalog illustration, refined subtly textured brushwork, clear natural seams and fabric details, front flat-lay clothing, pleasing distinct silhouettes. Each garment is neutral MEDIUM GRAY, with subtle grayscale shading only, no colored accents. Shoes gray with light gray or white soles. Pure white surrounds each item with no cast shadows.
+EXACT ordered cell contents, left to right:
+Row 1: regular crew-neck T-shirt; oversized broad T-shirt; fitted waist T-shirt; short baby/crop T-shirt; off-shoulder top; long-sleeve T-shirt.
+Row 2: tank top; strapless tube top; short-sleeve polo shirt; crewneck sweatshirt; pullover hoodie; zipper-front hoodie.
+Row 3: button-front cardigan; crewneck knitted sweater; straight-leg jeans; wide-leg jeans; skinny jeans; tailored trousers.
+Row 4: cuffed sweatpants; cargo pants with side pockets; mini skirt; midi skirt; denim shorts; denim jacket.
+Row 5: leather biker jacket; tailored blazer; long belted trench coat; short puffer jacket; long wool coat; bomber jacket.
+Row 6: pair of low-top sneakers; pair of loafers; pair of Mary Jane shoes; pair of ankle boots; shoulder bag; baseball cap.
+Each pair of shoes counts as one cell subject. All 36 slots must be present exactly once in the exact specified order. Maintain front views for apparel and clear catalog three-quarter views for footwear, bag, and cap.
+No text, no labels, no numbers, no logos, no watermarks, no people, no mannequins, no hangers, no extra objects, no cell borders, no objects or shadows crossing cells. Prioritize accurate regular grid positioning and distinct garment silhouettes.
