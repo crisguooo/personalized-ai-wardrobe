@@ -223,7 +223,7 @@ export default function Swipe({
             <FlatLay outfit={current} />
             {hasWeather && (
               <div className="weather-reason">
-                <span className="eyebrow">WHY THIS WORKS TODAY</span>
+                <span className="eyebrow">WHY THESE PIECES</span>
                 <p>
                   {weatherReason(
                     current,

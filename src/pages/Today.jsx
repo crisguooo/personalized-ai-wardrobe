@@ -10,6 +10,7 @@ import {
 import { BY_ID } from "../data/catalog.js";
 import FlatLay from "../components/FlatLay.jsx";
 import Garment from "../components/Garment.jsx";
+import WeatherNeeds from "../components/WeatherNeeds.jsx";
 import {
   freshWeather,
   today,
@@ -329,12 +330,18 @@ export default function Today({
               <span> Edit</span>
             </button>
           </div>
+          <WeatherNeeds
+            closet={state.closet}
+            weather={weather}
+            overrides={state.thermalOverrides}
+            onCloset={onCloset}
+          />
           {current ? (
             <>
               <div className="today-outfit">
                 <FlatLay outfit={current} />
                 <div className="weather-reason">
-                  <span className="eyebrow">WHY THIS WORKS TODAY</span>
+                  <span className="eyebrow">WHY THESE PIECES</span>
                   <p>
                     {weatherReason(current, weather, state.thermalOverrides)}
                   </p>

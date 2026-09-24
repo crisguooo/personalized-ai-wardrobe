@@ -1,4 +1,6 @@
 import { COLORS } from "../data/catalog.js";
+import { useId } from "react";
+import { EXTRA_SHAPES } from "../data/extraGarments.js";
 export function ColorFilters() {
   return (
     <svg
@@ -44,6 +46,41 @@ export const illustrationMap = {
   scarf: "/assets/scarf.svg",
 };
 export default function Garment({ item, className = "" }) {
+  const gradient = useId();
+  if (item.assetKey === "extra-vector")
+    return (
+      <svg
+        role="img"
+        aria-label={`${item.color} ${item.name}`}
+        className={`garment ${className}`}
+        viewBox="0 0 240 240"
+        style={{ background: "none", filter: `url(#tint-${item.color})` }}
+      >
+        <defs>
+          <linearGradient id={gradient}>
+            <stop stopColor="#999" />
+            <stop offset=".48" stopColor="#c3c3c3" />
+            <stop offset="1" stopColor="#858585" />
+          </linearGradient>
+        </defs>
+        <path
+          d={EXTRA_SHAPES[item.key][0]}
+          fill={`url(#${gradient})`}
+          fillRule="evenodd"
+          stroke="#737373"
+          strokeWidth="1.5"
+          strokeLinejoin="round"
+        />
+        <path
+          d={EXTRA_SHAPES[item.key][1]}
+          fill="none"
+          stroke="#666"
+          strokeWidth="1.4"
+          opacity=".65"
+          strokeLinejoin="round"
+        />
+      </svg>
+    );
   return (
     <span
       role="img"

@@ -58,15 +58,26 @@ export function validity(outfit, ownedIds) {
   for (const c of ["top", "bottom", "shoes"])
     if (items.filter((i) => i.category === c).length !== 1)
       errors.push(`Needs exactly one ${c}`);
-  for (const c of ["midlayer", "outerwear", "accessory"])
+  for (const c of ["midlayer", "outerwear"])
     if (items.filter((i) => i.category === c).length > 1)
       errors.push(`Too many ${c} pieces`);
+  const slots = items
+    .filter((i) => i.category === "accessory")
+    .map((i) => i.accessorySlot);
+  if (new Set(slots).size !== slots.length)
+    errors.push("Too many accessories in the same slot");
   const top = items.find((i) => i.category === "top"),
     mid = items.find((i) => i.category === "midlayer"),
     outer = items.find((i) => i.category === "outerwear");
   if (top?.warmth >= 3 && mid)
     errors.push("Bulky base cannot fit under a mid-layer");
-  if (top && mid && outer && top.warmth + mid.warmth + outer.warmth > 7)
+  if (
+    top &&
+    mid &&
+    outer &&
+    top.warmth + mid.warmth + outer.warmth > 7 &&
+    !outer.thermal.winterLevel
+  )
     errors.push("Too many heavy layers");
   return errors;
 }
@@ -320,6 +331,8 @@ export function swap(outfit, id, ownedIds, profile, occasion) {
       (i) =>
         i &&
         i.category === original.category &&
+        (i.category !== "accessory" ||
+          i.accessorySlot === original.accessorySlot) &&
         i.id !== id &&
         !outfit.itemIds.includes(i.id),
     )

@@ -1,4 +1,5 @@
 import { thermalGuide } from "./thermal.js";
+import { EXTRA_ROWS, EXTRA_SHAPES } from "./extraGarments.js";
 /** Canonical archetypes, not brands or retailer SKUs. All artwork is original. */
 export const COLORS = {
   white: { hex: "#eeeae1", filter: "brightness(1.7)" },
@@ -415,6 +416,7 @@ rows.push(
     "minimal casual",
   ],
 );
+rows.push(...EXTRA_ROWS);
 export const ARCHETYPES = rows.map(
   (
     [key, name, category, fit, subcategory, layer, warmth, formality, tags],
@@ -431,6 +433,18 @@ export const ARCHETYPES = rows.map(
     styleTags: tags.split(" "),
     sprite,
     thermal: thermalGuide(key, category, warmth),
+    accessorySlot:
+      category === "accessory"
+        ? {
+            scarf: "neck",
+            hat: "head",
+            gloves: "hands",
+            bag: "bag",
+            belt: "waist",
+            jewelry: "jewelry",
+            eyewear: "eyes",
+          }[subcategory]
+        : null,
     neckline:
       key === "off-shoulder"
         ? "off-shoulder"
@@ -454,9 +468,11 @@ export const CATALOG = ARCHETYPES.flatMap((a) =>
     id: `${a.key}:${color}`,
     archetype: a.key,
     color,
-    assetKey: ["tall-boots", "scarf"].includes(a.key)
-      ? a.key
-      : "wardrobe-atlas",
+    assetKey: EXTRA_SHAPES[a.key]
+      ? "extra-vector"
+      : ["tall-boots", "scarf"].includes(a.key)
+        ? a.key
+        : "wardrobe-atlas",
   })),
 );
 export const BY_ID = Object.fromEntries(CATALOG.map((i) => [i.id, i]));

@@ -10,13 +10,13 @@ export default function FlatLay({
   if (!outfit) return null;
   return (
     <div
-      className={`flatlay ${small ? "small" : ""}`}
+      className={`flatlay ${small ? "small" : ""} ${outfit.itemIds.length >= 6 ? "many-pieces" : ""}`}
       aria-label="Outfit flat lay"
     >
       {outfit.itemIds.map((id) => {
         const item = BY_ID[id];
         if (!item) return null;
-        const classes = `flat-item slot-${item.category} ${selected === id ? "selected" : ""} ${ghostId === id ? "ghost" : ""}`;
+        const classes = `flat-item slot-${item.category} ${item.accessorySlot ? `slot-accessory-${item.accessorySlot}` : ""} ${selected === id ? "selected" : ""} ${ghostId === id ? "ghost" : ""}`;
         return onSelect ? (
           <button
             className={classes}

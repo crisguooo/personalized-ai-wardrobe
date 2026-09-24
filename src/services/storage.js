@@ -52,7 +52,9 @@ export function sanitize(raw) {
     generated: outfits("generated").slice(-60),
     onboarded: raw.onboarded === true,
     onboarding: normalizeOnboarding(raw.onboarding),
-    setupPhase: raw.setupPhase === "weather" ? "weather" : "closet",
+    setupPhase: ["weather", "edit"].includes(raw.setupPhase)
+      ? raw.setupPhase
+      : "closet",
     weather: normalizeWeather(raw.weather),
     thermalOverrides: normalizeThermalOverrides(raw.thermalOverrides),
     learned: raw.learned === true,

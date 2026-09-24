@@ -19,6 +19,7 @@ import {
 import { event, appendEvents } from "../services/analytics.js";
 import Garment from "../components/Garment.jsx";
 import FlatLay from "../components/FlatLay.jsx";
+import WeatherNeeds from "../components/WeatherNeeds.jsx";
 import {
   today,
   validRange,
@@ -98,7 +99,11 @@ export default function Builder({
     }
     const options = available
       .filter(
-        (i) => i.category === BY_ID[selected].category && i.id !== selected,
+        (i) =>
+          i.category === BY_ID[selected].category &&
+          i.id !== selected &&
+          (i.category !== "accessory" ||
+            i.accessorySlot === BY_ID[selected].accessorySlot),
       )
       .map((i) => {
         const itemIds = current.itemIds.map((id) =>
@@ -185,6 +190,13 @@ export default function Builder({
           Refine my taste
         </button>
       </div>
+      {hasWeather && (
+        <WeatherNeeds
+          closet={state.closet}
+          weather={state.weather}
+          overrides={state.thermalOverrides}
+        />
+      )}
       <div className="segmented studio-tabs">
         <button
           className={tab === "studio" ? "active" : ""}
@@ -271,7 +283,10 @@ export default function Builder({
                     title={`${i.color} ${i.name}`}
                     onClick={() => {
                       const old = current.itemIds.find(
-                        (id) => BY_ID[id].category === i.category,
+                        (id) =>
+                          BY_ID[id].category === i.category &&
+                          (i.category !== "accessory" ||
+                            BY_ID[id].accessorySlot === i.accessorySlot),
                       );
                       let ids = old
                         ? current.itemIds.map((id) => (id === old ? i.id : id))
@@ -308,7 +323,7 @@ export default function Builder({
             />
             {hasWeather && (
               <div className="weather-reason">
-                <span className="eyebrow">WHY THIS WORKS TODAY</span>
+                <span className="eyebrow">WHY THESE PIECES</span>
                 <p>
                   {weatherReason(
                     current,

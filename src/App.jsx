@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { Check } from "lucide-react";
 import { BY_ID, STARTER_IDS } from "./data/catalog.js";
-import { generate, learn, validity } from "./engine/wardrobe.js";
+import { learn, validity } from "./engine/wardrobe.js";
+import { weatherCandidates } from "./engine/weather.js";
 import { createStorage, freshState } from "./services/storage.js";
 import { event, appendEvents } from "./services/analytics.js";
 import { ColorFilters } from "./components/Garment.jsx";
@@ -59,7 +60,10 @@ export default function App() {
   const track = (name, properties) =>
     setState((s) => appendEvents(s, event(name, properties)));
   const owned = state.closet.map((id) => BY_ID[id]);
-  const candidates = useMemo(() => generate(state.closet), [state.closet]);
+  const candidates = useMemo(
+    () => weatherCandidates(state.closet),
+    [state.closet],
+  );
   const ready = candidates.length > 0;
   const start = () => {
     if (!ready) return;
@@ -92,12 +96,19 @@ export default function App() {
     return (
       <>
         <ColorFilters />
-        {state.setupPhase === "weather" ? (
+        {state.setupPhase === "edit" ? (
+          <main>
+            <Closet
+              {...{ state, owned, toggle, ready }}
+              start={() => setState((s) => ({ ...s, setupPhase: "weather" }))}
+            />
+          </main>
+        ) : state.setupPhase === "weather" ? (
           <Today
             {...{ state, setState, profile }}
             onboarding
             onComplete={start}
-            onCloset={() => setState((s) => ({ ...s, setupPhase: "closet" }))}
+            onCloset={() => setState((s) => ({ ...s, setupPhase: "edit" }))}
           />
         ) : (
           <Onboarding

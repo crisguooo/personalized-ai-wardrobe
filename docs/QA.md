@@ -2,12 +2,23 @@
 
 ## Automated
 
-- 23 Node tests pass, including the original engine and onboarding cases plus weather unit conversion, seasonal-first entry, removable layers across 9–17°C, hot days, personal cold tolerance, per-piece calibration, limited-closet mismatches and weather persistence.
+- 27 Node tests pass, including two-degree coverage steps, Fahrenheit boundary equivalence, named winter equipment at threshold crossings, multiple winter accessories, and per-piece upper/lower range changes.
 - Vite production build passes.
 - Source formatting check passes.
 - npm dependency audit reported zero vulnerabilities at install time.
 
 ## First-time onboarding redesign
+
+### Simple closet and temperature ladder revision
+
+- Closet now has two simultaneous scrolling lists on desktop and mobile: all clothes on the left and owned pieces on the right. No search, fit filters, statistics, starter panel or editorial sidebars.
+- Expanded metadata and original vector illustrations to 60 archetypes / 480 color variants, including winter layers and separate accessory slots.
+- Verified a three-piece closet at −3–1°C produces an explicit missing winter equipment list; only the three owned items appear in the outfit.
+- **Update my clothes** opens the two-list editor during onboarding without revealing product navigation. Added winter pieces there and verified the missing-equipment heading disappears on returning to Today.
+- Visually checked the two lists at desktop width and 390px; no horizontal overflow.
+- Verified blue long-sleeve tee addition appears in the owned list; removing it re-enables the same add action. Newest pieces appear first.
+- Verified seven winter pieces render at equal width on mobile, without overlapping; winter explanations can recommend opening a retained coat for ventilation.
+- The new temperature ladder and coverage rules supersede the earlier thermal assumptions documented below.
 
 ### Weather extension
 
@@ -37,7 +48,7 @@ Verified against a production preview using isolated localhost origins, preservi
 
 ## Original product-loop browser demo
 
-Verified before the onboarding redesign in Chrome on localhost with a newly created application origin. The catalog/starter entry below is now available after onboarding:
+Verified before the onboarding redesign in Chrome on localhost with a newly created application origin. The catalog/starter entry described below is historical and has since been replaced:
 
 1. Empty closet shows disabled learning until required categories are present.
 2. Starter adds 18 pieces and enables learning.

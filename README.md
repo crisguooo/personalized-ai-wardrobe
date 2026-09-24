@@ -22,9 +22,9 @@ A closet inventory does not tell you why some combinations feel like you and oth
 8. Open **Missing** to compare three gaps and preview up to three unlocked outfits. Only the dashed garment is hypothetical.
 9. Refresh: closet, feedback, learned profile, saved/generated outfits and onboarding survive.
 
-**My style → Start a fresh demo** resets this browser's data after confirmation. Starter clothing is seeded only on request; feedback and preferences are never pre-seeded.
+**My style → Start a fresh demo** resets this browser's data after confirmation. Clothing, feedback and preferences are never pre-seeded.
 
-First-time setup hides all product navigation, catalog, search, filters and dashboard content. It uses one question per screen, large garment choices, a simple progress indicator, Back and a fixed bottom action. Both selections and the current step survive refresh. Full product navigation appears after setup completion; returning users can manage their inventory in Closet.
+First-time setup hides product navigation and uses one question per screen with Back and a fixed bottom action. Selections and the current step survive refresh. If weather reveals missing pieces, **Update my clothes** opens the simple two-list editor directly, keeping product navigation hidden until completion. Returning users can manage the same lists in Closet.
 
 ## Screens and visual system
 
@@ -34,7 +34,7 @@ The interface uses cream paper, tomato-red controls, editorial serif typography 
 | ------------- | ------------------------------------------------------------------------- |
 | First-time setup | Welcome, silhouette choices, individual colors, optional extras, closet payoff |
 | Today         | Low/high input, personal cold tolerance, weather outfit and editable piece guides |
-| Closet        | Clothing grid, category and fit filters, color swatches, owned-item count |
+| Closet        | “Tell us what you own.” All clothes on the left, owned pieces on the right; choose color, add or remove |
 | Swipe & Learn | Flat-lay card, optional reasons, fifth-rating insight transition          |
 | Outfit studio | Occasion picker, owned-clothing rail, single-item swap, saved looks       |
 | Style DNA     | Evidence-based dimensions, interpretable insights, acceptance comparison  |
@@ -70,7 +70,7 @@ npm run format:check  # source formatting
 ## Architecture
 
 ```text
-src/data/catalog.js       Canonical metadata, 38 archetypes × 8 colors
+src/data/catalog.js       Canonical metadata, 60 archetypes × 8 colors
 src/data/thermal.js       Editable starting temperature ranges and layer insulation
 src/components/          Shared garment renderer, flat-lay composition
 src/engine/wardrobe.js    Validity → candidates → features → preferences → ranking
@@ -101,7 +101,7 @@ Knee-high boots and the scarf use original local SVG illustrations alongside the
 
 ### Outfit generation
 
-Hard constraints require exactly one top, one bottom and one pair of shoes, with at most one mid-layer, outer layer and accessory. Unknown IDs, duplicates, unowned items and physically bulky layering are rejected. Personal taste is a soft signal, separate from validity; fitted-on-fitted is allowed if the user likes it.
+Hard constraints require exactly one top, one bottom and one pair of shoes, with at most one midlayer and outer layer. Accessories use separate head, neck, hands, bag, waist, jewelry and eyes slots, so a beanie, scarf and gloves can be worn together. Winter coats support appropriate insulating midlayers. Unknown IDs, duplicates, unowned items and incompatible bulky bases are rejected. Personal taste is a soft signal, separate from validity.
 
 Generation is a deterministic bounded sample of up to 900 candidates. Initial exploration maximizes feature and item diversity. Learned ranking combines preference scores with an occasion prior. Local refinements favor candidates changing the fewest pieces. **Swap this** substitutes exactly one owned item from the same category and revalidates the result.
 
@@ -109,7 +109,11 @@ Generation is a deterministic bounded sample of up to 900 candidates. Initial ex
 
 Today accepts a manually entered daily low and high in either unit; switching units converts existing inputs. Temperatures are stored canonically in Celsius with a local date. Opening Today on a new day asks for an updated forecast. No location permission or weather service is required.
 
-Each of the 304 variants inherits an editable temperature guide. Top ranges describe the base without extra layers; removable midlayers, coats and scarves contribute estimated insulation. The weather engine assesses the low with the full outfit and the high across combinations of removable layers, then uses style preference as a secondary signal. It only uses owned clothes. Scarves are explicitly considered alongside available outfits, and alternate Today looks stay near the best weather fit.
+Each of the 480 variants inherits an editable base temperature guide, coverage value and insulation contribution. The default tee range is **27–30°C**. Approximately every 2°C lower, the decision ladder asks for longer bottoms, longer sleeves, a warmer base or an extra layer. Full-length bottoms and shoes contribute modest warmth reductions; coats contribute more. Personal edits to both ends of a piece's range affect the outfit estimate.
+
+Explicit coverage rules supplement the warmth estimate: below **8°C**, require a winter coat; below **5°C**, lined pants and boots; below **2°C**, a warm hat and gloves; below **0°C**, an insulated winter coat and winter boots. Scarves are required below 10°C. Personal comfort shifts the effective temperature. Cosmetic accessories cannot satisfy winter requirements, and editing a tee's range cannot turn it into a winter coat.
+
+Recommendations assess the low with the full outfit and the high with removable layers taken off or an outer layer opened for ventilation. Clothing requirements take priority over style preference. Only owned items appear in the outfit. A separate **Missing from your closet** checklist names required equipment and example archetypes; adding a piece updates that checklist immediately. The expandable temperature ladder explains the defaults. Scarves, beanies and gloves are evaluated together, and alternate Today looks stay near the best weather fit.
 
 Users may choose default guidance, feeling cold easily, running warm, or their own temperature at which they want a heavy coat. The custom threshold also discourages removing that coat while the temperature remains at or below it. Individual variant ranges can be edited in the outfit's expandable guides and survive refresh. Today's weather also informs Swipe & Learn and outfit studio ranking; saved looks remain user choices.
 
@@ -164,7 +168,7 @@ The browser demo was manually exercised through selection, five feedback actions
 ## Current limitations
 
 - Local single-browser prototype: no accounts, sync or deployment configured.
-- 38 representative archetypes, not every example in the original brief; shoe and accessory variety can expand.
+- 60 representative archetypes with eight colors each; actual fabric weights and individual garment measurements are not captured.
 - Atlas cells and tinting are approximation artwork; long garments may have tight crop margins. Per-item transparent assets are the natural next step.
 - Occasion, compatibility and preference scores are explainable heuristics, not a professionally validated styling model. A small closet limits variety, and five ratings yield tentative signals.
 - Gap search uses a fixed canonical color for each missing archetype and bounded combinations; it does not search every possible color or guarantee the global optimum.

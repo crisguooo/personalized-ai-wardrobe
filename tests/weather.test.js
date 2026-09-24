@@ -12,7 +12,9 @@ import {
   weatherFit,
   weatherReason,
   guideFor,
+  weatherNeeds,
 } from "../src/engine/weather.js";
+import { weatherBand } from "../src/data/thermal.js";
 import { freshState, sanitize } from "../src/services/storage.js";
 import {
   SETUP_GROUPS,
@@ -29,6 +31,17 @@ const ids = [
   "trench:beige",
   "puffer:black",
   "scarf:grey",
+  "long-sleeve:white",
+  "light-cardigan:grey",
+  "fleece-jacket:beige",
+  "fleece-pants:black",
+  "long-puffer:black",
+  "winter-boots:black",
+  "denim-shorts:blue",
+  "sandals:black",
+  "cropped-trousers:beige",
+  "beanie:grey",
+  "gloves:black",
 ];
 const weather = { ...freshWeather(), lowC: 9, highC: 17 };
 const candidates = weatherCandidates(ids);
@@ -91,10 +104,11 @@ test("hot days avoid heavy layers and cold personal experience changes the recom
   const personal = { ...weather, comfort: "custom", coatBelowC: 17 };
   const cold = ranked(personal)[0];
   assert.notEqual(cold.id, ranked()[0].id);
-  assert(cold.itemIds.includes("knit:beige"));
   assert(
-    cold.itemIds.some((id) =>
-      ["puffer", "wool-coat"].includes(BY_ID[id].archetype),
+    cold.itemIds.some(
+      (id) =>
+        BY_ID[id].category === "outerwear" &&
+        BY_ID[id].thermal.winterLevel >= 1,
     ),
   );
   assert.match(weatherReason(cold, personal), /big coat at or below 17°C/);
@@ -113,7 +127,7 @@ test("each item has a guide and changing one owned variant alters weather suitab
     weatherFit(outfit, weather, overrides).penalty <
       weatherFit(outfit, weather).penalty,
   );
-  assert.equal(guideFor(BY_ID["crew-tee:black"], overrides).minC, 17);
+  assert.equal(guideFor(BY_ID["crew-tee:black"], overrides).minC, 27);
 });
 test("a limited closet gets an honest warmth mismatch instead of invented items", () => {
   const only = weatherCandidates([
@@ -123,7 +137,7 @@ test("a limited closet gets an honest warmth mismatch instead of invented items"
   ]);
   const cold = { ...weather, lowC: -5, highC: 3 };
   const best = rankForWeather(only, learn([]), cold)[0];
-  assert.match(weatherReason(best, cold), /may still feel too cold/);
+  assert.match(weatherReason(best, cold), /incomplete.*insulated winter coat/);
   assert.equal(best.itemIds.length, 3);
 });
 test("weather, personal experience and per-piece guides survive persistence; invalid data is discarded", () => {
@@ -153,4 +167,104 @@ test("weather, personal experience and per-piece guides survive persistence; inv
     sanitize({ ...state, weather: { lowC: 20, highC: 0 } }).weather.lowC,
     null,
   );
+});
+
+test("tee baseline and two-degree changes increase required coverage", () => {
+  assert.deepEqual(
+    [
+      BY_ID["crew-tee:white"].thermal.minC,
+      BY_ID["crew-tee:white"].thermal.maxC,
+    ],
+    [27, 30],
+  );
+  const outfit = {
+    itemIds: ["crew-tee:white", "denim-shorts:blue", "sandals:black"],
+  };
+  const at = (t) => ({ ...weather, lowC: t, highC: t });
+  assert.equal(weatherFit(outfit, at(29)).penalty, 0);
+  assert(
+    weatherNeeds(outfit.itemIds, at(27)).missing.some(
+      (r) => r.key === "bottoms",
+    ),
+  );
+  assert(
+    weatherNeeds(outfit.itemIds, at(25)).missing.some(
+      (r) => r.key === "sleeves",
+    ),
+  );
+  assert(
+    weatherNeeds(outfit.itemIds, at(23)).missing.some(
+      (r) => r.label === "Full-length bottoms",
+    ),
+  );
+  assert(
+    weatherNeeds(outfit.itemIds, at(15)).missing.some((r) => r.key === "coat"),
+  );
+  for (const t of [2, 5, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30])
+    assert.deepEqual(weatherBand(t), weatherBand(toC(fromC(t, "F"), "F")));
+});
+test("winter thresholds name specific missing equipment and ignore cosmetic accessories", () => {
+  const summer = [
+    "crew-tee:white",
+    "denim-shorts:blue",
+    "sandals:black",
+    "earrings:grey",
+    "belt:black",
+    "sunglasses:black",
+  ];
+  const missing = (t) =>
+    weatherNeeds(summer, { ...weather, lowC: t, highC: t }).missing;
+  assert.equal(missing(8).find((r) => r.key === "coat").label, "Warm coat");
+  assert.equal(missing(7.9).find((r) => r.key === "coat").label, "Winter coat");
+  assert(missing(4).some((r) => r.key === "lined-bottoms"));
+  assert(missing(1).some((r) => r.key === "hands"));
+  assert(missing(-1).some((r) => r.label === "Insulated winter coat"));
+  assert(missing(-1).some((r) => r.label === "Insulated winter boots"));
+  assert(
+    !weatherNeeds(
+      summer,
+      { ...weather, lowC: 7, highC: 7 },
+      { "crew-tee:white": { minC: -20, maxC: 30 } },
+    ).missing.every((r) => r.key !== "coat"),
+  );
+});
+test("full winter gear is composed together and passes coverage rules below freezing", () => {
+  const cold = { ...weather, lowC: -3, highC: 1 };
+  const full = [
+    "thermal-top:black",
+    "fleece-jacket:beige",
+    "fleece-pants:black",
+    "parka:black",
+    "winter-boots:black",
+    "scarf:grey",
+    "beanie:grey",
+    "gloves:black",
+  ];
+  assert.equal(weatherNeeds(full, cold).missing.length, 0);
+  const options = weatherCandidates(full);
+  const best = rankForWeather(options, learn([]), cold)[0];
+  assert.equal(best.weatherFit.missing.length, 0);
+  assert(
+    best.itemIds.includes("scarf:grey") &&
+      best.itemIds.includes("beanie:grey") &&
+      best.itemIds.includes("gloves:black"),
+  );
+  assert.deepEqual(validity(best, full), []);
+  assert(
+    validity({ itemIds: [...best.itemIds, "cap:black"] }).includes(
+      "Too many accessories in the same slot",
+    ),
+  );
+});
+
+test("changing a bottom temperature ceiling changes the whole outfit heat estimate", () => {
+  const outfit = {
+    itemIds: ["long-sleeve:white", "straight-jeans:blue", "sneakers:white"],
+  };
+  const mild = { ...weather, lowC: 22, highC: 23 };
+  const original = weatherFit(outfit, mild);
+  const adjusted = weatherFit(outfit, mild, {
+    "straight-jeans:blue": { minC: 23, maxC: 24 },
+  });
+  assert(adjusted.hotGap > original.hotGap);
 });
