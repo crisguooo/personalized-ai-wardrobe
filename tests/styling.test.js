@@ -100,11 +100,11 @@ test("recommendations prefer up to three colors and a single tonal family includ
   );
   assert(palette(tonal).cohesive);
   assert.equal(palette(tonal).colors.length, 3);
-  assert.deepEqual(coordinated([mixed, tonal]), [tonal]);
+  assert.deepEqual(coordinated([mixed, tonal]), [tonal, mixed]);
   assert.equal(rank([mixed, tonal], learn([]))[0].id, tonal.id);
   const fallback = coordinated([mixed]);
   assert.equal(fallback.length, 1);
-  assert.match(palette(fallback[0]).label, /More than 3 colors/);
+  assert.match(palette(fallback[0]).label, /Expressive palette/);
 });
 test("winter accessory variants are matched to the outfit without dropping required warmth", () => {
   const options = rankForWeather(

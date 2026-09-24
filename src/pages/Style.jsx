@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Heart, Plus, Sparkles } from "lucide-react";
-import { insights, LABELS } from "../engine/wardrobe.js";
+import { insights, LABELS, hasEvidence } from "../engine/wardrobe.js";
 import { summarizeStyle } from "../services/ai.js";
 const pct = (n) => Math.round(n * 100);
 export default function Style({ profile, state, onLearn }) {
@@ -57,7 +57,9 @@ export default function Style({ profile, state, onLearn }) {
             <span>✳</span>
           </div>
           {dimensions.map(([key, title, label]) => {
-            const known = profile.evidence[key];
+            const known = hasEvidence(profile, key)
+              ? profile.evidence[key]
+              : null;
             const weight = profile.weights[key] ?? 0;
             return (
               <div className="dna-row" key={key}>
@@ -80,7 +82,9 @@ export default function Style({ profile, state, onLearn }) {
                 <small>
                   {known
                     ? `${Math.round(known.count)} signal${Math.round(known.count) === 1 ? "" : "s"} · ${weight >= 0 ? "+" : ""}${weight.toFixed(2)}`
-                    : "No evidence yet"}
+                    : profile.evidence[key]
+                      ? "Not enough evidence yet"
+                      : "No evidence yet"}
                 </small>
               </div>
             );
@@ -120,7 +124,7 @@ export default function Style({ profile, state, onLearn }) {
               </div>
             </div>
           ))}
-          {!profile.ratings && (
+          {!found.prefer.length && !found.avoid.length && (
             <p>
               Rate a few outfits and this page will tell your story. No preset
               personality types.
@@ -158,15 +162,17 @@ export default function Style({ profile, state, onLearn }) {
           <p>loved after personalization</p>
         </div>
       </div>
-      <details className="debug">
-        <summary>Behind the preferences</summary>
-        <p>
-          Likes support shared features. Specific reasons update relevant
-          dimensions. Unexplained dislikes mostly affect the top–bottom
-          combination; they never blacklist every garment.
-        </p>
-        <pre>{JSON.stringify(profile, null, 2)}</pre>
-      </details>
+      {import.meta.env.DEV && (
+        <details className="debug">
+          <summary>Behind the preferences</summary>
+          <p>
+            Likes support shared features. Specific reasons update relevant
+            dimensions. Unexplained dislikes mostly affect the top–bottom
+            combination; they never blacklist every garment.
+          </p>
+          <pre>{JSON.stringify(profile, null, 2)}</pre>
+        </details>
+      )}
     </section>
   );
 }

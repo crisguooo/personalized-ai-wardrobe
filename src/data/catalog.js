@@ -1,3 +1,4 @@
+import { stylingMetadata, COLOR_METADATA } from "./styling.js";
 import { thermalGuide } from "./thermal.js";
 import { EXTRA_ROWS, EXTRA_SHAPES } from "./extraGarments.js";
 /** Canonical archetypes, not brands or retailer SKUs. All artwork is original. */
@@ -421,65 +422,68 @@ rows.push(
   ],
 );
 rows.push(...EXTRA_ROWS);
-export const ARCHETYPES = rows.map(
-  (
-    [key, name, category, fit, subcategory, layer, warmth, formality, tags],
-    sprite,
-  ) => ({
-    key,
-    name,
-    category,
-    fit,
-    subcategory,
-    layer,
-    warmth,
-    formality,
-    styleTags: tags.split(" "),
-    sprite,
-    thermal: thermalGuide(key, category, warmth),
-    accessorySlot:
-      category === "accessory"
-        ? {
-            scarf: "neck",
-            hat: "head",
-            gloves: "hands",
-            bag: "bag",
-            belt: "waist",
-            jewelry: "jewelry",
-            eyewear: "eyes",
-          }[subcategory]
-        : null,
-    neckline:
-      key === "off-shoulder"
-        ? "off-shoulder"
-        : key === "tube"
-          ? "strapless"
-          : key === "polo"
-            ? "collared"
-            : category === "top"
-              ? "crew"
-              : null,
-    length: ["baby-tee", "tube"].includes(key)
-      ? "cropped"
-      : [
-            "trench",
-            "wool-coat",
-            "midi-skirt",
-            "long-puffer",
-            "parka",
-            "long-cardigan",
-            "pleated-skirt",
-          ].includes(key)
-        ? "long"
-        : "regular",
-  }),
-);
+export const ARCHETYPES = rows
+  .map(
+    (
+      [key, name, category, fit, subcategory, layer, warmth, formality, tags],
+      sprite,
+    ) => ({
+      key,
+      name,
+      category,
+      fit,
+      subcategory,
+      layer,
+      warmth,
+      formality,
+      styleTags: tags.split(" "),
+      sprite,
+      thermal: thermalGuide(key, category, warmth),
+      accessorySlot:
+        category === "accessory"
+          ? {
+              scarf: "neck",
+              hat: "head",
+              gloves: "hands",
+              bag: "bag",
+              belt: "waist",
+              jewelry: "jewelry",
+              eyewear: "eyes",
+            }[subcategory]
+          : null,
+      neckline:
+        key === "off-shoulder"
+          ? "off-shoulder"
+          : key === "tube"
+            ? "strapless"
+            : key === "polo"
+              ? "collared"
+              : category === "top"
+                ? "crew"
+                : null,
+      length: ["baby-tee", "tube"].includes(key)
+        ? "cropped"
+        : [
+              "trench",
+              "wool-coat",
+              "midi-skirt",
+              "long-puffer",
+              "parka",
+              "long-cardigan",
+              "pleated-skirt",
+            ].includes(key)
+          ? "long"
+          : "regular",
+    }),
+  )
+  .map((a) => ({ ...a, ...stylingMetadata(a) }));
 export const CATALOG = ARCHETYPES.flatMap((a) =>
   Object.keys(COLORS).map((color) => ({
     ...a,
     id: `${a.key}:${color}`,
     archetype: a.key,
     color,
+    colorFamily: COLOR_METADATA[color].family,
     assetKey: EXTRA_SHAPES[a.key]
       ? "extra-vector"
       : ["tall-boots", "scarf"].includes(a.key)

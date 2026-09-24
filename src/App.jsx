@@ -85,7 +85,9 @@ export default function App() {
         {
           ...s,
           closet,
-          saved: s.saved.filter((o) => !validity(o, closet).length),
+          saved: s.saved.filter(
+            (o) => !validity(o, closet, { physical: false }).length,
+          ),
           generated: s.generated.filter((o) => !validity(o, closet).length),
         },
         event(removing ? "closet_item_removed" : "closet_item_added", { id }),

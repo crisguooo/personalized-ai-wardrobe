@@ -101,13 +101,15 @@ Knee-high boots and the scarf use original local SVG illustrations alongside the
 
 ### Outfit generation
 
+See [the styling-engine audit and architecture](docs/STYLING_ENGINE.md) for the shared scoring pipeline, metadata defaults, configurable occasion objectives and migration behavior.
+
 Hard constraints require exactly one top, one bottom and one pair of shoes, with at most one midlayer and outer layer. Accessories use separate head, neck, hands, bag, waist, jewelry and eyes slots, so a beanie, scarf and gloves can be worn together. Only one outer shell is allowed: fleece jackets and padded vests cannot stack with another jacket or long coat. Knit cardigans can layer beneath coats. Unknown IDs, duplicates, unowned items and incompatible bulky bases are rejected. Personal taste is a soft signal, separate from validity.
 
 Closet keeps the two-list layout and adds six category buttons. The catalog includes cashmere knits, flannel shirts, ribbed tops, long cardigans, wool trousers, lined leggings, pleated skirts, cotton shorts, cropped jackets, short wool jackets, Chelsea boots and crossbody bags. Cream, camel, olive and burgundy join the original eight colors.
 
-Automatic looks prefer no more than three distinct colors across clothing, shoes and accessories, with one tonal family plus neutrals. Winter accessory variants are chosen against the outfit palette. The palette note shows actual colors; when the owned wardrobe cannot achieve a coordinated palette at the best weather fit, it explicitly labels the closest available match. Color preferences never bypass the winter base or outer-shell constraints.
+Palette compatibility is a soft score: neutrals, tonal relationships, controlled contrast and accessory accents receive useful priors. Too many dominant/unrelated colors score lower unless repeated feedback supports expressive combinations. Valid alternatives are retained for personalization. Winter accessory variants are chosen against the outfit palette. Color preferences never bypass the winter base or physical layer-capacity constraints.
 
-Generation is a deterministic bounded sample of up to 900 candidates. Initial exploration maximizes feature and item diversity. Learned ranking combines preference scores with an occasion prior. Local refinements favor candidates changing the fewest pieces. **Swap this** substitutes exactly one owned item from the same category and revalidates the result.
+Generation uses an indexed bounded sample of up to 900 candidates rather than enumerating the whole Cartesian product. Valid candidates receive silhouette, layering, color, comfort, visual-interest, occasion and personal scores. Five centralized objective profiles combine these scores, followed by quality-bounded diversity control. Selecting an occasion changes the actual recommendation immediately. Refinements temporarily adjust targets/weights; **Swap this** locks every other piece and ranks compatible replacements through the same engine. Opt-in development inspection is available at `?debug=1#outfits`.
 
 ### Weather and personal comfort
 
@@ -131,18 +133,18 @@ No training or fine-tuning. Feature extraction describes silhouettes, color pale
 
 - Likes add positive weighted evidence for present features.
 - Explicit dislike reasons update only the relevant dimensions.
-- Unexplained dislikes primarily penalize the top–bottom archetype pairing and weakly update present composition patterns. They never blacklist every garment or color in the outfit.
+- Unexplained dislikes weakly update only the top–bottom archetype pairing. Reason-specific dislikes do not also penalize that pairing.
 - Evidence is shrunk toward neutral with a prior; weights are bounded to `[-1, 1]`.
-- A deterministic preference score ranks valid candidates. A displayed score is an uncalibrated heuristic, **not a probability**.
-- Insights use actual positive/negative weights; missing evidence is displayed as unknown. Style DNA exposes the full profile for inspection.
+- Personal scores combine with general/occasion scores, and repeated preference can override default silhouette and palette priors. A displayed taste score is an uncalibrated heuristic, **not a probability**.
+- Insights require repeated observations and sufficient confidence; overlapping statements are deduplicated. Style DNA and the optional summary API share this evidence gate. Full profile inspection is development-only.
 
 ### Wardrobe-gap algorithm
 
-For each not-owned archetype, evaluate one canonical color and generate up to 300 valid hypothetical outfits that **must include that candidate**. Every other piece must already be owned.
+For each not-owned archetype, evaluate a color from the user's dominant closet palette (canonical fallback) and generate up to 300 valid hypothetical outfits that **must include that candidate**. Every other piece must already be owned.
 
-With feedback, the high-preference threshold is the larger of `0.55` and the current closet's 65th-percentile preference score minus `0.03`. Without feedback it is neutral (`0.50`), and the UI explains that estimates are not personalized yet.
+Require shared outfit quality of at least `0.70` or the current closet's 65th-percentile quality minus `0.02`, whichever is greater. Personal scores must reach `0.55` after three ratings, otherwise the neutral `0.50`. Recolored duplicates count once.
 
-The ranking value is the **sum of preference scores for newly unlocked outfits above that threshold**. This combines useful volume with preference, instead of ranking by raw combinatorial count. Each card shows sampled count, likely count, compatible owned pieces and three diverse qualifying previews where available. Estimates are bounded samples, not exhaustive counts or validated predictions of what a person will wear.
+The ranking value is **sum(quality × personal preference) × diversity** for qualifying new outfits. This prevents raw combination count alone from deciding the ranking. Each card shows sampled count, likely count, compatible owned pieces and three diverse qualifying previews where available. Estimates are bounded samples, not exhaustive counts or validated predictions of what a person will wear.
 
 ### AI usage and environment variables
 
@@ -177,7 +179,7 @@ The browser demo was manually exercised through selection, five feedback actions
 - 72 representative archetypes with twelve colors each; actual fabric weights and individual garment measurements are not captured.
 - Atlas cells and tinting are approximation artwork; long garments may have tight crop margins. Per-item transparent assets are the natural next step.
 - Occasion, compatibility and preference scores are explainable heuristics, not a professionally validated styling model. A small closet limits variety, and five ratings yield tentative signals.
-- Gap search uses a fixed canonical color for each missing archetype and bounded combinations; it does not search every possible color or guarantee the global optimum.
+- Gap search uses a representative closet color for each missing archetype and bounded combinations; it does not search every possible color or guarantee the global optimum.
 - Live Anthropic calls are optional and were not exercised without credentials. The shipped experience does not depend on them.
 - Fonts are requested from Google Fonts with local system fallbacks.
 

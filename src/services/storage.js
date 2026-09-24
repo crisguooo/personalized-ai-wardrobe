@@ -33,14 +33,17 @@ export function sanitize(raw) {
           e &&
           ["like", "dislike"].includes(e.rating) &&
           Array.isArray(e.itemIds) &&
-          !validity(e).length &&
+          !validity(e, undefined, { physical: false }).length &&
           typeof e.timestamp === "string",
       )
     : [];
   const outfits = (key) =>
     Array.isArray(raw[key])
       ? raw[key].filter(
-          (o) => o && Array.isArray(o.itemIds) && !validity(o, closet).length,
+          (o) =>
+            o &&
+            Array.isArray(o.itemIds) &&
+            !validity(o, closet, { physical: key !== "saved" }).length,
         )
       : [];
   return {

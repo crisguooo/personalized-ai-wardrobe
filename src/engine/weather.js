@@ -1,7 +1,7 @@
 import { BY_ID } from "../data/catalog.js";
-import { generate, score, validity } from "./wardrobe.js";
+import { generate, rank, validity } from "./wardrobe.js";
 
-import { coordinated, palette } from "./palette.js";
+import { palette } from "./palette.js";
 
 export const today = () => new Date().toLocaleDateString("en-CA");
 export const toC = (value, unit) =>
@@ -339,8 +339,10 @@ export function rankForWeather(
   weather,
   overrides = {},
   occasion = "Everyday",
+  options = {},
 ) {
-  if (!validRange(weather?.lowC, weather?.highC)) return candidates;
+  if (!validRange(weather?.lowC, weather?.highC))
+    return rank(candidates, profile, occasion, options);
   const eligible = candidates
     .filter((o) => !validity(o).length)
     .map((o) => ({ ...o, weatherFit: weatherFit(o, weather, overrides) }))
@@ -353,15 +355,11 @@ export function rankForWeather(
   if (!eligible.length) return [];
   const best = Math.min(...eligible.map((o) => o.weatherFit.penalty));
   // Never trade away temperature suitability just to obtain a nicer palette.
-  return coordinated(
+  return rank(
     eligible.filter((o) => o.weatherFit.penalty <= best + 3),
-  ).sort(
-    (a, b) =>
-      palette(a).penalty - palette(b).penalty ||
-      a.weatherFit.penalty -
-        score(a, profile, occasion) * 2 -
-        (b.weatherFit.penalty - score(b, profile, occasion) * 2) ||
-      a.id.localeCompare(b.id),
+    profile,
+    occasion,
+    options,
   );
 }
 export function weatherReason(outfit, weather, overrides = {}) {

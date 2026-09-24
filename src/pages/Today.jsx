@@ -79,10 +79,7 @@ export default function Today({
       weather,
       state.thermalOverrides,
     );
-    const best = all[0]?.weatherFit?.penalty;
-    return best === undefined
-      ? all
-      : all.filter((o) => o.weatherFit.penalty <= best + 3);
+    return all;
   }, [candidates, profile, weather, state.thermalOverrides]);
   const current = ranked[index % Math.max(1, ranked.length)];
   function changeUnit(next) {

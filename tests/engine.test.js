@@ -135,8 +135,12 @@ test("learning changes ranking and real insights follow contrasting feedback", (
   assert(preferenceScore(relaxed, p) > preferenceScore(fitted, p));
   assert.equal(rank([fitted, relaxed], p)[0].id, relaxed.id);
   const summary = insights(p);
-  assert(summary.prefer.some(([k]) => k === "relaxed"));
-  assert(summary.avoid.some(([k]) => k === "fitted"));
+  assert(
+    summary.prefer.some(([k]) =>
+      ["relaxed", "volume", "relaxedStructured"].includes(k),
+    ),
+  );
+  assert(summary.avoid.some(([k]) => ["fitted", "fittedPair"].includes(k)));
   const opposite = learn([
     feedback(fitted, "like"),
     feedback(relaxed, "dislike", "Too baggy"),

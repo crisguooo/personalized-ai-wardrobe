@@ -1,6 +1,6 @@
 import http from "node:http";
 import { summarize } from "./provider.js";
-import { LABELS } from "../src/engine/wardrobe.js";
+import { LABELS, insights } from "../src/engine/wardrobe.js";
 const server = http.createServer(async (req, res) => {
   const send = (status, body) => {
     res.writeHead(status, {
@@ -23,10 +23,14 @@ const server = http.createServer(async (req, res) => {
     const weights = data.profile?.weights;
     if (!weights || typeof weights !== "object")
       return send(400, { error: "Invalid preference profile" });
+    const supported = new Set(
+      insights(data.profile).prefer.map(([key]) => key),
+    );
     const evidence = Object.entries(weights)
       .filter(
         ([k, v]) =>
           LABELS[k] &&
+          supported.has(k) &&
           typeof v === "number" &&
           Number.isFinite(v) &&
           v > 0.1 &&

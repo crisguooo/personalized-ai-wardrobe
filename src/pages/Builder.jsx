@@ -13,12 +13,13 @@ import { BY_ID } from "../data/catalog.js";
 import {
   rank,
   validity,
-  features,
+  swapCandidates,
   preferenceScore,
 } from "../engine/wardrobe.js";
 import { event, appendEvents } from "../services/analytics.js";
 import Garment from "../components/Garment.jsx";
 import PaletteNote from "../components/PaletteNote.jsx";
+import ScoreDebug from "../components/ScoreDebug.jsx";
 import FlatLay from "../components/FlatLay.jsx";
 import WeatherNeeds from "../components/WeatherNeeds.jsx";
 import {
@@ -42,7 +43,7 @@ export default function Builder({
   const hasWeather =
     state.weather?.date === today() &&
     validRange(state.weather.lowC, state.weather.highC);
-  const order = (items, occasion = "Everyday") =>
+  const order = (items, occasion = "Everyday", options = {}) =>
     hasWeather
       ? rankForWeather(
           items,
@@ -50,18 +51,19 @@ export default function Builder({
           state.weather,
           state.thermalOverrides,
           occasion,
+          options,
         )
-      : rank(items, profile, occasion);
+      : rank(items, profile, occasion, options);
   const [occasion, setOccasion] = useState(
       () => state.generated.at(-1)?.occasion ?? "Everyday",
     ),
-    [current, setCurrent] = useState(() =>
-      hasWeather
-        ? order(candidates)[0]
-        : (state.generated.at(-1) ?? order(candidates)[0]),
+    [current, setCurrent] = useState(
+      () =>
+        order(candidates, state.generated.at(-1)?.occasion ?? "Everyday")[0],
     ),
     [selected, setSelected] = useState(null),
-    [tab, setTab] = useState("studio");
+    [tab, setTab] = useState("studio"),
+    [activeRefinement, setActiveRefinement] = useState(null);
   const available = state.closet.map((id) => BY_ID[id]);
   useEffect(() => {
     if (
@@ -76,9 +78,13 @@ export default function Builder({
         ).length)
     )
       setCurrent(order(candidates, occasion)[0]);
-  }, [candidates]);
-  function apply(outfit, name = "personalized_outfit_generated") {
-    if (!outfit) return;
+  }, [candidates, state.weather, state.thermalOverrides]);
+  function apply(
+    outfit,
+    name = "personalized_outfit_generated",
+    nextOccasion = occasion,
+  ) {
+    if (!outfit || validity(outfit, state.closet).length) return;
     if (
       hasWeather &&
       !rankForWeather([outfit], profile, state.weather, state.thermalOverrides)
@@ -97,18 +103,25 @@ export default function Builder({
           ...s,
           generated: [
             ...s.generated.filter((o) => o.id !== outfit.id),
-            { ...outfit, occasion, createdAt: new Date().toISOString() },
+            {
+              id: outfit.id,
+              itemIds: outfit.itemIds,
+              occasion: nextOccasion,
+              createdAt: new Date().toISOString(),
+            },
           ].slice(-60),
         },
-        event(name, { outfitId: outfit.id, occasion }),
+        event(name, { outfitId: outfit.id, occasion: nextOccasion }),
       ),
     );
   }
   function styleMe() {
+    setActiveRefinement(null);
     const recent = new Set(state.generated.slice(-8).map((o) => o.id));
     const list = order(
       candidates.filter((o) => o.id !== current?.id),
       occasion,
+      { recent: state.generated.slice(-4) },
     );
     apply(list.find((o) => !recent.has(o.id)) ?? list[0] ?? current);
   }
@@ -117,52 +130,23 @@ export default function Builder({
       notify("Select a piece on the canvas first.");
       return;
     }
-    const options = available
-      .filter(
-        (i) =>
-          i.category === BY_ID[selected].category &&
-          i.id !== selected &&
-          (i.category !== "accessory" ||
-            i.accessorySlot === BY_ID[selected].accessorySlot),
-      )
-      .map((i) => {
-        const itemIds = current.itemIds.map((id) =>
-          id === selected ? i.id : id,
-        );
-        return { id: [...itemIds].sort().join("|"), itemIds };
-      })
-      .filter((o) => !validity(o, state.closet).length);
-    const next = order(options, occasion)[0];
+    const options = swapCandidates(current, selected, state.closet);
+    const next = order(options, occasion, {
+      diversity: false,
+      refinement: activeRefinement,
+    })[0];
     if (next) {
       apply(next, "outfit_item_swapped");
       notify("One piece changed. The rest stays yours.");
     } else notify("Add another piece in this category to swap it.");
   }
   function refine(type) {
-    const f = features(current);
-    let options = candidates.filter((o) => o.id !== current.id);
-    if (type === "More layered")
-      options = options.filter((o) => features(o).layered > f.layered);
-    if (type === "More casual")
-      options = options.filter((o) => features(o).casual > f.casual);
-    if (type === "More dressy")
-      options = options.filter((o) => features(o).dressy > f.dressy);
-    if (type === "Less basic")
-      options = options.filter(
-        (o) =>
-          features(o).simple < f.simple ||
-          features(o).colorful > f.colorful ||
-          features(o).layered > f.layered,
-      );
-    options = order(options, occasion);
-    options.sort((a, b) => {
-      const changed = (o) =>
-        o.itemIds.filter((id) => !current.itemIds.includes(id)).length;
-      return (
-        changed(a) - changed(b) ||
-        preferenceScore(b, profile) - preferenceScore(a, profile)
-      );
-    });
+    const options = order(
+      candidates.filter((o) => o.id !== current.id),
+      occasion,
+      { refinement: type, diversity: false },
+    );
+    setActiveRefinement(type);
     if (options[0]) apply(options[0]);
     else
       notify(
@@ -178,7 +162,12 @@ export default function Builder({
       ...s,
       saved: [
         ...s.saved,
-        { ...current, occasion, createdAt: new Date().toISOString() },
+        {
+          id: current.id,
+          itemIds: current.itemIds,
+          occasion,
+          createdAt: new Date().toISOString(),
+        },
       ],
     }));
     notify("Saved to your outfit collection.");
@@ -228,6 +217,11 @@ export default function Builder({
                 className="saved-card"
                 key={o.id}
                 onClick={() => {
+                  const errors = validity(o, state.closet);
+                  if (errors.length) {
+                    notify(errors[0]);
+                    return;
+                  }
                   if (
                     hasWeather &&
                     !rankForWeather(
@@ -284,7 +278,15 @@ export default function Builder({
                 <button
                   className={occasion === o ? "active" : ""}
                   key={o}
-                  onClick={() => setOccasion(o)}
+                  onClick={() => {
+                    setOccasion(o);
+                    setActiveRefinement(null);
+                    apply(
+                      order(candidates, o)[0],
+                      "occasion_outfit_generated",
+                      o,
+                    );
+                  }}
                 >
                   {o}
                   {occasion === o ? (
@@ -355,6 +357,12 @@ export default function Builder({
               onSelect={setSelected}
             />
             <PaletteNote outfit={current} />
+            <ScoreDebug
+              outfit={current}
+              profile={profile}
+              occasion={occasion}
+              refinement={activeRefinement}
+            />
             {hasWeather && (
               <div className="weather-reason">
                 <span className="eyebrow">WHY THESE PIECES</span>

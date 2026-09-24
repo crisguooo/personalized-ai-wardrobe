@@ -2,14 +2,12 @@ import { useState, useEffect, useRef, useMemo } from "react";
 import { X, Heart, ArrowRight, ArrowUpRight } from "lucide-react";
 import {
   rank,
-  explore,
   learn,
   features,
   preferenceScore,
   LABELS,
   REASONS,
 } from "../engine/wardrobe.js";
-import { coordinated } from "../engine/palette.js";
 import { event, appendEvents } from "../services/analytics.js";
 import PaletteNote from "../components/PaletteNote.jsx";
 import FlatLay from "../components/FlatLay.jsx";
@@ -40,20 +38,24 @@ export default function Swipe({
     state.weather?.date === today() &&
     validRange(state.weather.lowC, state.weather.highC);
   const queue = useMemo(() => {
-    let pool = coordinated(candidates);
-    if (hasWeather) {
-      const ranked = rankForWeather(
-        pool,
-        profile,
-        state.weather,
-        state.thermalOverrides,
-      );
-      const best = ranked[0]?.weatherFit.penalty ?? 0;
-      pool = ranked.filter((o) => o.weatherFit.penalty <= best + 3);
-    }
-    return state.learned
-      ? rank(pool, profile)
-      : explore(pool, Math.min(24, pool.length));
+    const pool = hasWeather
+      ? rankForWeather(
+          candidates,
+          profile,
+          state.weather,
+          state.thermalOverrides,
+        )
+      : candidates;
+    return rank(
+      pool.filter((o) => !seen.has(o.id)),
+      profile,
+      "Everyday",
+      {
+        limit: 24,
+        exploration: !state.learned,
+        recent: state.feedback.slice(-4),
+      },
+    );
   }, [
     candidates,
     state.learned,
@@ -61,10 +63,9 @@ export default function Swipe({
     state.weather,
     state.thermalOverrides,
     hasWeather,
+    state.feedback,
   ]);
-  const current =
-    queue.find((o) => !seen.has(o.id)) ??
-    (!hasWeather ? coordinated(candidates).find((o) => !seen.has(o.id)) : null);
+  const current = queue[0];
   const milestone = state.feedback.length >= 5 && !state.learned;
   useEffect(() => {
     if (current && !milestone)

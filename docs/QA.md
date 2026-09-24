@@ -2,12 +2,24 @@
 
 ## Automated
 
-- 33 Node tests pass, including independent winter bases, no double outer shells, coordinated three-color selection, matched winter accessory variants, two-degree coverage steps, Fahrenheit boundary equivalence and per-piece range edits.
+- 50 Node tests pass. The new fashion-engine cases cover layer capacity, valid defined/roomy silhouettes, learned ranking reversals, targeted dislikes, confidence and nonredundant insights, occasion objectives, practical footwear, soft palette scoring, refinements, diversity, swap locking, shared-engine gap value and legacy persistence. Existing winter, units, onboarding and storage regressions continue to pass.
 - Vite production build passes.
 - Source formatting check passes.
 - npm dependency audit reported zero vulnerabilities at install time.
 
 ## First-time onboarding redesign
+
+### Recommendation-engine refactor (2026-09-24)
+
+- No stylesheet, artwork, navigation, closet or onboarding layout changes. Existing component routes call a stable wardrobe facade backed by pure styling modules.
+- Isolated QA at port 5182 with an independently stored closet and deterministic summary API at port 3002; no user inventory was edited.
+- Work selected tailored trousers, loafers and a blazer; Comfy selected a tee, relaxed sweatpants and sneakers. Selection immediately changes the outfit as well as the occasion label.
+- More dressy raised the formality target and selected trousers/loafers. Swap changed only the top; the original bottoms and shoes stayed locked. Saving and reloading preserved the look.
+- Missing displayed actual hypothetical owned-plus-one previews. Revised diversity weighting put a lower raw-count item above higher-count alternatives.
+- One Love left My Style at Still exploring; the summary API explicitly asked for more evidence. Five UI ratings (including Too basic) produced supported, nonredundant palette/interest/silhouette insights, then the existing personalized swipe experience. Reload preserved the five ratings.
+- Development query `?debug=1#outfits` exposed finite component scores, centralized weights, targets and rule notes. Browser console showed no errors during these interactions.
+- Removing the debug query hid the panel; the final production bundle contains no debug-panel label. The unchanged studio layout was visually checked. The main preview/API were restarted on ports 5173/3001 with the final code.
+- See `STYLING_ENGINE.md` for the audit, formulas, limits and compatibility decisions. Later scoring rules supersede earlier palette-filter and preference-only gap descriptions below.
 
 ### Winter layering, palette and closet categories
 

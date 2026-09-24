@@ -100,7 +100,7 @@ export default function Missing({ state, profile, track }) {
           <small>
             Estimated from {gap.possible} sampled valid combinations.{" "}
             {profile.ratings
-              ? "Taste threshold: " + pct(gap.threshold) + "/100."
+              ? "Outfit quality threshold: " + pct(gap.threshold) + "/100."
               : "Rate outfits to personalize these estimates."}{" "}
             No prices, brands or shopping links.
           </small>
@@ -126,8 +126,10 @@ export default function Missing({ state, profile, track }) {
         <p>
           We generate valid outfits that must include exactly this missing
           candidate; every other item is owned. We count only outfits passing
-          the preference threshold, then rank by the sum of their taste scores.
-          Counts are bounded sample estimates, not exhaustive combinations.
+          the shared outfit-quality and taste thresholds. Recolored duplicates
+          count once; value combines quality, predicted preference and
+          diversity. Counts are bounded sample estimates, not exhaustive
+          combinations.
         </p>
         <div className="ranking-table">
           {results.map((g) => (
