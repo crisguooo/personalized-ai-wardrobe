@@ -40,6 +40,8 @@ export function ColorFilters() {
 // A single registry can later resolve per-item transparent PNGs instead of atlas cells.
 export const illustrationMap = {
   "wardrobe-atlas": "/assets/wardrobe-atlas.png",
+  "tall-boots": "/assets/tall-boots.svg",
+  scarf: "/assets/scarf.svg",
 };
 export default function Garment({ item, className = "" }) {
   return (
@@ -49,7 +51,13 @@ export default function Garment({ item, className = "" }) {
       className={`garment ${className}`}
       style={{
         backgroundImage: `url(${illustrationMap[item.assetKey]})`,
-        backgroundPosition: `${(item.sprite % 6) * 20}% ${Math.floor(item.sprite / 6) * 20}%`,
+        ...(item.assetKey !== "wardrobe-atlas"
+          ? { backgroundSize: "contain", backgroundRepeat: "no-repeat" }
+          : {}),
+        backgroundPosition:
+          item.assetKey !== "wardrobe-atlas"
+            ? "center"
+            : `${(item.sprite % 6) * 20}% ${Math.floor(item.sprite / 6) * 20}%`,
         filter: `url(#tint-${item.color})`,
       }}
     />

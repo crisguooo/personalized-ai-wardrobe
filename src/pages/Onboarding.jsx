@@ -42,6 +42,11 @@ export default function Onboarding({
     canStartEarly(state.closet) ||
     (draft.group >= 3 && hasEssentials(state.closet));
   const complete = hasEssentials(state.closet);
+  const groupAlreadyCovered = state.closet.some(
+    (id) =>
+      BY_ID[id]?.category ===
+      { tops: "top", bottoms: "bottom", shoes: "shoes" }[group.key],
+  );
   function chooseFit(key) {
     const removing = choices.includes(key);
     const next = removing
@@ -99,7 +104,9 @@ export default function Onboarding({
           ? { ...draft, colorIndex: draft.colorIndex - 1 }
           : { ...draft, step: "fits" },
       );
-    if (!draft.group) return update({ ...draft, step: "welcome" });
+    if (draft.group === 6) return update({ ...draft, step: "welcome" });
+    if (!draft.group)
+      return update({ ...draft, step: "fits", group: 6, colorIndex: 0 });
     const previousChoices =
       draft.selections[SETUP_GROUPS[draft.group - 1].key] ?? [];
     update({
@@ -111,7 +118,7 @@ export default function Onboarding({
   }
   const disabled =
     draft.step === "fits"
-      ? !choices.length && !group.optional
+      ? !choices.length && !group.optional && !groupAlreadyCovered
       : draft.step === "colors"
         ? !selectedColors.length
         : false;
@@ -145,7 +152,7 @@ export default function Onboarding({
           <span />
         )}
       </header>
-      {!["welcome", "ready"].includes(draft.step) && (
+      {!["welcome", "ready"].includes(draft.step) && draft.group !== 6 && (
         <div
           className="setup-progress"
           role="progressbar"
@@ -330,7 +337,7 @@ export default function Onboarding({
               disabled={!complete}
               onClick={onComplete}
             >
-              Teach Wearwell my style
+              Dress for today
               <ArrowRight size={19} />
             </button>
           ) : early && draft.step !== "welcome" ? (

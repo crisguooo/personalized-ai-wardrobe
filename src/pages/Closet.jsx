@@ -91,7 +91,7 @@ export default function Closet({
                 className={mode === "library" ? "active" : ""}
                 onClick={() => setMode("library")}
               >
-                The edit <span>36</span>
+                The edit <span>{ARCHETYPES.length}</span>
               </button>
               <button
                 className={mode === "owned" ? "active" : ""}
@@ -238,7 +238,7 @@ export default function Closet({
               ))}
             </div>
             <button className="primary" disabled={!ready} onClick={start}>
-              Find my style
+              Dress for today
               <ArrowRight size={18} />
             </button>
             <small>

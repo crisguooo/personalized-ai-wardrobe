@@ -1,6 +1,11 @@
 import { BY_ID } from "../data/catalog.js";
 import { learn, validity } from "../engine/wardrobe.js";
 import { freshOnboarding, normalizeOnboarding } from "../engine/onboarding.js";
+import {
+  freshWeather,
+  normalizeWeather,
+  normalizeThermalOverrides,
+} from "../engine/weather.js";
 export const STORAGE_KEY = "wearwell:v1";
 export const freshState = () => ({
   version: 1,
@@ -11,6 +16,9 @@ export const freshState = () => ({
   generated: [],
   onboarded: false,
   onboarding: freshOnboarding(),
+  setupPhase: "closet",
+  weather: freshWeather(),
+  thermalOverrides: {},
   learned: false,
   events: [],
 });
@@ -44,6 +52,9 @@ export function sanitize(raw) {
     generated: outfits("generated").slice(-60),
     onboarded: raw.onboarded === true,
     onboarding: normalizeOnboarding(raw.onboarding),
+    setupPhase: raw.setupPhase === "weather" ? "weather" : "closet",
+    weather: normalizeWeather(raw.weather),
+    thermalOverrides: normalizeThermalOverrides(raw.thermalOverrides),
     learned: raw.learned === true,
     events: Array.isArray(raw.events) ? raw.events.slice(-500) : [],
   };

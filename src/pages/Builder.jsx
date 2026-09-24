@@ -12,7 +12,6 @@ import {
 import { BY_ID } from "../data/catalog.js";
 import {
   rank,
-  swap,
   validity,
   features,
   preferenceScore,
@@ -20,6 +19,14 @@ import {
 import { event, appendEvents } from "../services/analytics.js";
 import Garment from "../components/Garment.jsx";
 import FlatLay from "../components/FlatLay.jsx";
+import {
+  today,
+  validRange,
+  rankForWeather,
+  weatherReason,
+  weatherFit,
+  temperature,
+} from "../engine/weather.js";
 const pct = (n) => Math.round(n * 100);
 export default function Builder({
   state,
@@ -29,19 +36,35 @@ export default function Builder({
   track,
   notify,
   onLearn,
+  onWeather,
 }) {
+  const hasWeather =
+    state.weather?.date === today() &&
+    validRange(state.weather.lowC, state.weather.highC);
+  const order = (items, occasion = "Everyday") =>
+    hasWeather
+      ? rankForWeather(
+          items,
+          profile,
+          state.weather,
+          state.thermalOverrides,
+          occasion,
+        )
+      : rank(items, profile, occasion);
   const [occasion, setOccasion] = useState(
       () => state.generated.at(-1)?.occasion ?? "Everyday",
     ),
-    [current, setCurrent] = useState(
-      () => state.generated.at(-1) ?? rank(candidates, profile)[0],
+    [current, setCurrent] = useState(() =>
+      hasWeather
+        ? order(candidates)[0]
+        : (state.generated.at(-1) ?? order(candidates)[0]),
     ),
     [selected, setSelected] = useState(null),
     [tab, setTab] = useState("studio");
   const available = state.closet.map((id) => BY_ID[id]);
   useEffect(() => {
     if (current && validity(current, state.closet).length)
-      setCurrent(rank(candidates, profile, occasion)[0]);
+      setCurrent(order(candidates, occasion)[0]);
   }, [candidates]);
   function apply(outfit, name = "personalized_outfit_generated") {
     if (!outfit) return;
@@ -62,9 +85,8 @@ export default function Builder({
   }
   function styleMe() {
     const recent = new Set(state.generated.slice(-8).map((o) => o.id));
-    const list = rank(
+    const list = order(
       candidates.filter((o) => o.id !== current?.id),
-      profile,
       occasion,
     );
     apply(list.find((o) => !recent.has(o.id)) ?? list[0] ?? current);
@@ -74,7 +96,18 @@ export default function Builder({
       notify("Select a piece on the canvas first.");
       return;
     }
-    const next = swap(current, selected, state.closet, profile, occasion);
+    const options = available
+      .filter(
+        (i) => i.category === BY_ID[selected].category && i.id !== selected,
+      )
+      .map((i) => {
+        const itemIds = current.itemIds.map((id) =>
+          id === selected ? i.id : id,
+        );
+        return { id: [...itemIds].sort().join("|"), itemIds };
+      })
+      .filter((o) => !validity(o, state.closet).length);
+    const next = order(options, occasion)[0];
     if (next) {
       apply(next, "outfit_item_swapped");
       notify("One piece changed. The rest stays yours.");
@@ -96,6 +129,18 @@ export default function Builder({
           features(o).colorful > f.colorful ||
           features(o).layered > f.layered,
       );
+    if (hasWeather && options.length) {
+      const best = Math.min(
+        ...options.map(
+          (o) => weatherFit(o, state.weather, state.thermalOverrides).penalty,
+        ),
+      );
+      options = options.filter(
+        (o) =>
+          weatherFit(o, state.weather, state.thermalOverrides).penalty <=
+          best + 3,
+      );
+    }
     options.sort((a, b) => {
       const changed = (o) =>
         o.itemIds.filter((id) => !current.itemIds.includes(id)).length;
@@ -183,6 +228,11 @@ export default function Builder({
       ) : (
         <div className="builder-layout">
           <aside className="builder-controls">
+            <button className="weather-pill" onClick={onWeather}>
+              {hasWeather
+                ? `${temperature(state.weather.lowC, state.weather.unit)} → ${temperature(state.weather.highC, state.weather.unit)} · Edit weather`
+                : "Add today’s temperatures"}
+            </button>
             <span className="eyebrow">WHAT'S THE PLAN?</span>
             <div className="occasion-list">
               {["Everyday", "Going out", "Work", "Date", "Comfy"].map((o) => (
@@ -256,6 +306,18 @@ export default function Builder({
               selected={selected}
               onSelect={setSelected}
             />
+            {hasWeather && (
+              <div className="weather-reason">
+                <span className="eyebrow">WHY THIS WORKS TODAY</span>
+                <p>
+                  {weatherReason(
+                    current,
+                    state.weather,
+                    state.thermalOverrides,
+                  )}
+                </p>
+              </div>
+            )}
             <div className="canvas-bottom">
               <span>
                 {selected

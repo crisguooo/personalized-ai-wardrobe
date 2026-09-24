@@ -13,6 +13,12 @@ import { event, appendEvents } from "../services/analytics.js";
 import FlatLay from "../components/FlatLay.jsx";
 import Empty from "../components/Empty.jsx";
 import InsightMoment from "../components/InsightMoment.jsx";
+import {
+  today,
+  rankForWeather,
+  weatherReason,
+  validRange,
+} from "../engine/weather.js";
 const pct = (n) => Math.round(n * 100);
 export default function Swipe({
   state,
@@ -28,16 +34,35 @@ export default function Swipe({
   const pointer = useRef(null),
     lock = useRef(false);
   const seen = new Set(state.feedback.map((f) => f.outfitId));
-  const queue = useMemo(
-    () =>
-      state.learned
-        ? rank(candidates, profile)
-        : explore(candidates, Math.min(24, candidates.length)),
-    [candidates, state.learned, profile],
-  );
+  const hasWeather =
+    state.weather?.date === today() &&
+    validRange(state.weather.lowC, state.weather.highC);
+  const queue = useMemo(() => {
+    let pool = candidates;
+    if (hasWeather) {
+      const ranked = rankForWeather(
+        pool,
+        profile,
+        state.weather,
+        state.thermalOverrides,
+      );
+      const best = ranked[0]?.weatherFit.penalty ?? 0;
+      pool = ranked.filter((o) => o.weatherFit.penalty <= best + 3);
+    }
+    return state.learned
+      ? rank(pool, profile)
+      : explore(pool, Math.min(24, pool.length));
+  }, [
+    candidates,
+    state.learned,
+    profile,
+    state.weather,
+    state.thermalOverrides,
+    hasWeather,
+  ]);
   const current =
     queue.find((o) => !seen.has(o.id)) ??
-    candidates.find((o) => !seen.has(o.id));
+    (!hasWeather ? candidates.find((o) => !seen.has(o.id)) : null);
   const milestone = state.feedback.length >= 5 && !state.learned;
   useEffect(() => {
     if (current && !milestone)
@@ -196,6 +221,18 @@ export default function Swipe({
               </span>
             </div>
             <FlatLay outfit={current} />
+            {hasWeather && (
+              <div className="weather-reason">
+                <span className="eyebrow">WHY THIS WORKS TODAY</span>
+                <p>
+                  {weatherReason(
+                    current,
+                    state.weather,
+                    state.thermalOverrides,
+                  )}
+                </p>
+              </div>
+            )}
             <div className="outfit-card-caption">
               {Object.entries(features(current))
                 .filter(

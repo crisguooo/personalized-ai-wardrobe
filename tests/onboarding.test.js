@@ -90,7 +90,7 @@ test("legacy returning users keep completion; malformed drafts recover safely", 
     colorIndex: -2,
     selections: { accessories: ["invalid"] },
   });
-  assert.equal(clean.group, 5);
+  assert.equal(clean.group, 6);
   assert.equal(clean.step, "fits");
   assert.equal(clean.colorIndex, 0);
   assert.deepEqual(normalizeOnboarding(null), freshOnboarding());

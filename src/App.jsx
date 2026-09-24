@@ -12,11 +12,13 @@ import Builder from "./pages/Builder.jsx";
 import Style from "./pages/Style.jsx";
 import Missing from "./pages/Missing.jsx";
 import Onboarding from "./pages/Onboarding.jsx";
+import Today from "./pages/Today.jsx";
 const adapter = createStorage({
   getItem: (key) => localStorage.getItem(key),
   setItem: (key, value) => localStorage.setItem(key, value),
 });
 const navigation = [
+  ["today", "Today"],
   ["closet", "Closet"],
   ["outfits", "Outfits"],
   ["style", "My style"],
@@ -24,9 +26,9 @@ const navigation = [
 ];
 const urlPage = () => {
   const p = location.hash.slice(1);
-  return ["closet", "swipe", "outfits", "style", "missing"].includes(p)
+  return ["today", "closet", "swipe", "outfits", "style", "missing"].includes(p)
     ? p
-    : "closet";
+    : "today";
 };
 export default function App() {
   const [loaded] = useState(() => adapter.load());
@@ -90,7 +92,21 @@ export default function App() {
     return (
       <>
         <ColorFilters />
-        <Onboarding {...{ state, setState, storageError }} onComplete={start} />
+        {state.setupPhase === "weather" ? (
+          <Today
+            {...{ state, setState, profile }}
+            onboarding
+            onComplete={start}
+            onCloset={() => setState((s) => ({ ...s, setupPhase: "closet" }))}
+          />
+        ) : (
+          <Onboarding
+            {...{ state, setState, storageError }}
+            onComplete={() =>
+              setState((s) => ({ ...s, setupPhase: "weather" }))
+            }
+          />
+        )}
       </>
     );
   }
@@ -133,9 +149,17 @@ export default function App() {
         </div>
       )}
       <main>
+        {page === "today" && (
+          <Today
+            {...{ state, setState, profile }}
+            onComplete={() => (ready ? navigate("swipe") : navigate("closet"))}
+            onCloset={() => navigate("closet")}
+          />
+        )}
         {page === "closet" && (
           <Closet
-            {...{ state, owned, toggle, start, ready }}
+            {...{ state, owned, toggle, ready }}
+            start={() => navigate("today")}
             onStarter={() => {
               setState((s) => {
                 const closet = [...new Set([...s.closet, ...STARTER_IDS])];
@@ -171,6 +195,7 @@ export default function App() {
               {...{ state, setState, profile, candidates, track }}
               notify={setNotice}
               onLearn={() => navigate("swipe")}
+              onWeather={() => navigate("today")}
             />
           ) : (
             <Empty

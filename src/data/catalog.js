@@ -1,3 +1,4 @@
+import { thermalGuide } from "./thermal.js";
 /** Canonical archetypes, not brands or retailer SKUs. All artwork is original. */
 export const COLORS = {
   white: { hex: "#eeeae1", filter: "brightness(1.7)" },
@@ -390,6 +391,30 @@ const rows = [
     "sporty streetwear",
   ],
 ];
+rows.push(
+  [
+    "tall-boots",
+    "Knee-high boots",
+    "shoes",
+    "regular",
+    "boots",
+    "feet",
+    3,
+    1,
+    "minimal edgy",
+  ],
+  [
+    "scarf",
+    "Soft scarf",
+    "accessory",
+    "regular",
+    "scarf",
+    "accessory",
+    1,
+    1,
+    "minimal casual",
+  ],
+);
 export const ARCHETYPES = rows.map(
   (
     [key, name, category, fit, subcategory, layer, warmth, formality, tags],
@@ -405,6 +430,7 @@ export const ARCHETYPES = rows.map(
     formality,
     styleTags: tags.split(" "),
     sprite,
+    thermal: thermalGuide(key, category, warmth),
     neckline:
       key === "off-shoulder"
         ? "off-shoulder"
@@ -428,7 +454,9 @@ export const CATALOG = ARCHETYPES.flatMap((a) =>
     id: `${a.key}:${color}`,
     archetype: a.key,
     color,
-    assetKey: "wardrobe-atlas",
+    assetKey: ["tall-boots", "scarf"].includes(a.key)
+      ? a.key
+      : "wardrobe-atlas",
   })),
 );
 export const BY_ID = Object.fromEntries(CATALOG.map((i) => [i.id, i]));

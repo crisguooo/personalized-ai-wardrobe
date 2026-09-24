@@ -1,6 +1,7 @@
 import { BY_ID } from "../data/catalog.js";
 
-// Essentials come first. Everything after shoes is optional.
+// Keep group indices stable for existing drafts. New closets start with optional
+// seasonal picks at index 6, then go through tops, bottoms and shoes.
 export const SETUP_GROUPS = [
   {
     key: "tops",
@@ -29,7 +30,7 @@ export const SETUP_GROUPS = [
   {
     key: "shoes",
     title: "Which shoes are in your rotation?",
-    items: ["sneakers", "loafers", "mary-janes", "ankle-boots"],
+    items: ["sneakers", "loafers", "mary-janes", "ankle-boots", "tall-boots"],
   },
   {
     key: "layers",
@@ -53,13 +54,19 @@ export const SETUP_GROUPS = [
   {
     key: "accessories",
     title: "Any finishing touches?",
-    items: ["shoulder-bag", "cap"],
+    items: ["shoulder-bag", "cap", "scarf"],
+    optional: true,
+  },
+  {
+    key: "seasonal",
+    title: "Any cool-weather favorites?",
+    items: ["knit", "trench", "tall-boots", "puffer", "wool-coat", "scarf"],
     optional: true,
   },
 ];
 export const freshOnboarding = () => ({
   step: "welcome",
-  group: 0,
+  group: 6,
   selections: {},
   colorIndex: 0,
   resumeStep: "fits",
@@ -103,7 +110,9 @@ export function canStartEarly(ids) {
   return new Set(ids.filter((id) => BY_ID[id])).size >= 8 && hasEssentials(ids);
 }
 export function nextGroup(draft) {
-  return draft.group === SETUP_GROUPS.length - 1
+  if (draft.group === 6)
+    return { ...draft, step: "fits", group: 0, colorIndex: 0 };
+  return draft.group === 5
     ? { ...draft, step: "ready", resumeStep: "fits" }
     : { ...draft, step: "fits", group: draft.group + 1, colorIndex: 0 };
 }

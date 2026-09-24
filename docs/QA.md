@@ -2,12 +2,27 @@
 
 ## Automated
 
-- 16 Node tests pass, covering metadata, validity, owned-only generation, exploration, targeted feedback, opposite taste profiles, ranking uplift, single-item swaps, weighted gaps, storage, the no-key provider, early setup completion, optional groups, resumable drafts and returning-user migration.
+- 23 Node tests pass, including the original engine and onboarding cases plus weather unit conversion, seasonal-first entry, removable layers across 9–17°C, hot days, personal cold tolerance, per-piece calibration, limited-closet mismatches and weather persistence.
 - Vite production build passes.
 - Source formatting check passes.
 - npm dependency audit reported zero vulnerabilities at install time.
 
 ## First-time onboarding redesign
+
+### Weather extension
+
+Verified in a separate production preview with a fresh origin:
+
+1. Seasonal choices appear immediately after Welcome, with Skip; selected knit and knee-high boots count toward essentials without forcing extra tees or shoes.
+2. Built eight owned variants, then followed **Start with these → Dress for today** into temperature input without product navigation.
+3. A reversed 17–9°C range shows validation. Switching a valid 9–17°C input to Fahrenheit converts it to 48.2–62.6°F.
+4. Refresh after entering weather resumes the comfort question. Default guidance produced wool coat + tee + scarf with instructions to remove the coat and scarf at the high.
+5. A personal heavy-coat threshold of 17°C changed the base to a knit and retained the coat at the high, removing only the scarf.
+6. Edited the knee-high boots' maximum temperature to 19°C, saved, refreshed and verified both the value and **Your own comfort guide** label.
+7. **Teach Wearwell my style** completed onboarding and opened weather-aware Swipe & Learn; full navigation appeared then. Returning users can reopen Today and edit temperatures.
+8. Inspected the recommendation and temperature input at 390 × 844 with no horizontal overflow; restored the temporary viewport afterward.
+
+### Earlier onboarding verification
 
 Verified against a production preview using isolated localhost origins, preserving the user's active development closet:
 

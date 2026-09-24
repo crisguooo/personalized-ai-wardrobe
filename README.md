@@ -12,8 +12,8 @@ A closet inventory does not tell you why some combinations feel like you and oth
 
 ## A three-minute demo
 
-1. Start with **Build my closet**. Choose top silhouettes, then the colors you own for each; repeat for bottoms and shoes. Every silhouette/color combination becomes a separate piece.
-2. With eight pieces covering tops, bottoms and shoes, choose **Start with these →**. Layers, outerwear and accessories are optional and skippable; smaller closets can also finish once the three essentials are covered. The payoff shows your selected pieces, and **Teach Wearwell my style** opens Swipe & Learn directly.
+1. Start with **Build my closet**. Optional seasonal favorites come first: knit, trench, knee-high boots, puffer, wool coat and scarf. Then choose everyday silhouettes and their colors; each silhouette/color combination becomes a separate piece.
+2. With eight pieces covering tops, bottoms and shoes, choose **Start with these →**. Optional sections remain skippable; smaller closets can also finish once the essentials are covered. Choose **Dress for today**, enter the low/high in Celsius or Fahrenheit, and select a comfort preference. Your weather outfit includes a short explanation of what to wear at the low and remove at the high. **Teach Wearwell my style** then opens Swipe & Learn.
 3. Rate five deliberately varied outfits with **Love this** or **Not for me**. Dislike reasons are optional.
 4. Read **We learned something about you**. These insights are computed from those exact ratings, including an honest empty state when a signal is missing.
 5. Continue to a batch ranked by the learned profile. Rate another outfit to populate the before/after acceptance comparison.
@@ -33,6 +33,7 @@ The interface uses cream paper, tomato-red controls, editorial serif typography 
 | Screen        | Preview / screenshot placeholder                                          |
 | ------------- | ------------------------------------------------------------------------- |
 | First-time setup | Welcome, silhouette choices, individual colors, optional extras, closet payoff |
+| Today         | Low/high input, personal cold tolerance, weather outfit and editable piece guides |
 | Closet        | Clothing grid, category and fit filters, color swatches, owned-item count |
 | Swipe & Learn | Flat-lay card, optional reasons, fifth-rating insight transition          |
 | Outfit studio | Occasion picker, owned-clothing rail, single-item swap, saved looks       |
@@ -69,10 +70,12 @@ npm run format:check  # source formatting
 ## Architecture
 
 ```text
-src/data/catalog.js       Canonical metadata, 36 archetypes × 8 colors
+src/data/catalog.js       Canonical metadata, 38 archetypes × 8 colors
+src/data/thermal.js       Editable starting temperature ranges and layer insulation
 src/components/          Shared garment renderer, flat-lay composition
 src/engine/wardrobe.js    Validity → candidates → features → preferences → ranking
 src/engine/onboarding.js  Essential-first setup groups, resumable draft, early entry
+src/engine/weather.js     Unit conversion, personal comfort, low/high outfit scoring
 src/services/storage.js  Versioned localStorage repository and validation
 src/services/analytics.js Local event abstraction, bounded to 500 entries
 src/services/ai.js       Same-origin summary request
@@ -82,6 +85,7 @@ server/provider.js       Provider-neutral summary boundary with no-key fallback
 server/index.js          Local HTTP API; provider secrets stay server-side
 tests/engine.test.js      Core non-visual tests
 tests/onboarding.test.js  Early entry, optional categories, draft persistence, migration
+tests/weather.test.js     Units, seasonal entry, layering, comfort and thermal persistence
 docs/REFERENCE_REVIEW.md  Upstream inspection, reuse decisions, original plan
 ```
 
@@ -93,11 +97,23 @@ Every variant has a stable ID, archetype, category, subcategory, color, fit, nec
 
 The original generated 6×6 atlas is addressed through `illustrationMap`. SVG color matrices tint its grayscale cells while retaining the white background for multiply compositing; they do not draw garments. This keeps variants cohesive and avoids 288 separate downloads. Replace the renderer/registry with individually illustrated transparent PNGs later without changing recommendation data. The generation prompt is in [docs/wardrobe-atlas-prompt.txt](docs/wardrobe-atlas-prompt.txt).
 
+Knee-high boots and the scarf use original local SVG illustrations alongside the 36-cell atlas, with the same color treatment.
+
 ### Outfit generation
 
 Hard constraints require exactly one top, one bottom and one pair of shoes, with at most one mid-layer, outer layer and accessory. Unknown IDs, duplicates, unowned items and physically bulky layering are rejected. Personal taste is a soft signal, separate from validity; fitted-on-fitted is allowed if the user likes it.
 
 Generation is a deterministic bounded sample of up to 900 candidates. Initial exploration maximizes feature and item diversity. Learned ranking combines preference scores with an occasion prior. Local refinements favor candidates changing the fewest pieces. **Swap this** substitutes exactly one owned item from the same category and revalidates the result.
+
+### Weather and personal comfort
+
+Today accepts a manually entered daily low and high in either unit; switching units converts existing inputs. Temperatures are stored canonically in Celsius with a local date. Opening Today on a new day asks for an updated forecast. No location permission or weather service is required.
+
+Each of the 304 variants inherits an editable temperature guide. Top ranges describe the base without extra layers; removable midlayers, coats and scarves contribute estimated insulation. The weather engine assesses the low with the full outfit and the high across combinations of removable layers, then uses style preference as a secondary signal. It only uses owned clothes. Scarves are explicitly considered alongside available outfits, and alternate Today looks stay near the best weather fit.
+
+Users may choose default guidance, feeling cold easily, running warm, or their own temperature at which they want a heavy coat. The custom threshold also discourages removing that coat while the temperature remains at or below it. Individual variant ranges can be edited in the outfit's expandable guides and survive refresh. Today's weather also informs Swipe & Learn and outfit studio ranking; saved looks remain user choices.
+
+The explanation describes the selected garments and suggested layer removal, rather than claiming live wind or rain data. If available pieces leave a substantial warmth mismatch, it says so. Ranges and insulation are product heuristics, not measured fabric performance or universal comfort standards; wind, rain, activity and actual garment construction are not modeled.
 
 ### Preference learning
 
@@ -148,7 +164,7 @@ The browser demo was manually exercised through selection, five feedback actions
 ## Current limitations
 
 - Local single-browser prototype: no accounts, sync or deployment configured.
-- 36 representative archetypes, not every example in the original brief; shoe and accessory variety can expand.
+- 38 representative archetypes, not every example in the original brief; shoe and accessory variety can expand.
 - Atlas cells and tinting are approximation artwork; long garments may have tight crop margins. Per-item transparent assets are the natural next step.
 - Occasion, compatibility and preference scores are explainable heuristics, not a professionally validated styling model. A small closet limits variety, and five ratings yield tentative signals.
 - Gap search uses a fixed canonical color for each missing archetype and bounded combinations; it does not search every possible color or guarantee the global optimum.
