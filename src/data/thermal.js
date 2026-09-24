@@ -1,6 +1,17 @@
 // Wearwell's adjustable product rules. These are not measured fabric ratings.
 // [base low °C, base high °C, warmth reduction °C, coverage (0–3), winter level]
 const GUIDES = {
+  "cashmere-knit": [19, 23, 0, 3],
+  "flannel-shirt": [23, 26, 0, 3],
+  "ribbed-top": [23, 26, 0, 3],
+  "long-cardigan": [14, 20, 6, 3],
+  "wool-trousers": [21, 25, 6, 3, 1],
+  "thermal-leggings": [21, 25, 6, 3, 1],
+  "pleated-skirt": [24, 28, 2, 2],
+  "cotton-shorts": [28, 32, 0, 1],
+  "cropped-jacket": [16, 22, 4, 3],
+  "short-wool-jacket": [7, 14, 9, 3, 1],
+  "chelsea-boots": [25, 28, 2, 3],
   "crew-tee": [27, 30, 0, 1],
   "fitted-tee": [27, 30, 0, 1],
   "oversized-tee": [27, 30, 0, 1],
@@ -68,6 +79,8 @@ export function thermalGuide(key, category) {
     coverage,
     winterLevel,
     active,
+    shell: category === "outerwear" || ["fleece-jacket", "vest"].includes(key),
+    winterBase: category === "top" && coverage === 3 && minC <= 23,
     ventilationC:
       category === "outerwear"
         ? winterLevel

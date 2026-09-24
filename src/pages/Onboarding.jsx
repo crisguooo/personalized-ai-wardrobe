@@ -290,7 +290,14 @@ export default function Onboarding({
                       <Check
                         size={20}
                         color={
-                          ["black", "navy", "brown", "red"].includes(color)
+                          [
+                            "black",
+                            "navy",
+                            "brown",
+                            "red",
+                            "burgundy",
+                            "olive",
+                          ].includes(color)
                             ? "white"
                             : "#292923"
                         }

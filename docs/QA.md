@@ -2,12 +2,21 @@
 
 ## Automated
 
-- 27 Node tests pass, including two-degree coverage steps, Fahrenheit boundary equivalence, named winter equipment at threshold crossings, multiple winter accessories, and per-piece upper/lower range changes.
+- 33 Node tests pass, including independent winter bases, no double outer shells, coordinated three-color selection, matched winter accessory variants, two-degree coverage steps, Fahrenheit boundary equivalence and per-piece range edits.
 - Vite production build passes.
 - Source formatting check passes.
 - npm dependency audit reported zero vulnerabilities at install time.
 
 ## First-time onboarding redesign
+
+### Winter layering, palette and closet categories
+
+- Added 12 archetypes and four colors (72 / 864 total); category buttons keep the left closet list focused while the owned list stays visible.
+- Browser QA at localhost:5182: Outerwear category shows short wool/cropped jackets; selecting camel and adding the short wool jacket immediately adds the correct variant to My clothes.
+- At −3 to 1°C the recommendation contains a thermal top, lined pants, winter boots, one parka, scarf, beanie and gloves. It excludes the owned short-sleeve tee and fleece jacket; the palette note reports one neutral color.
+- Removing the thermal top through the UI replaces the outfit with a named warm long-sleeve base checklist. The studio also renders a recoverable empty state. Adding the thermal top restores recommendations.
+- At 390 × 844 the category buttons and two lists remain visible without horizontal overflow. Test data lives on a separate preview origin; the user's closet is unchanged.
+- Existing records below describe earlier milestones; the winter base and one-shell constraints above supersede their layering assumptions.
 
 ### Simple closet and temperature ladder revision
 

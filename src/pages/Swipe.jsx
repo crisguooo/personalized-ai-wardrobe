@@ -9,7 +9,9 @@ import {
   LABELS,
   REASONS,
 } from "../engine/wardrobe.js";
+import { coordinated } from "../engine/palette.js";
 import { event, appendEvents } from "../services/analytics.js";
+import PaletteNote from "../components/PaletteNote.jsx";
 import FlatLay from "../components/FlatLay.jsx";
 import Empty from "../components/Empty.jsx";
 import InsightMoment from "../components/InsightMoment.jsx";
@@ -38,7 +40,7 @@ export default function Swipe({
     state.weather?.date === today() &&
     validRange(state.weather.lowC, state.weather.highC);
   const queue = useMemo(() => {
-    let pool = candidates;
+    let pool = coordinated(candidates);
     if (hasWeather) {
       const ranked = rankForWeather(
         pool,
@@ -62,7 +64,7 @@ export default function Swipe({
   ]);
   const current =
     queue.find((o) => !seen.has(o.id)) ??
-    (!hasWeather ? candidates.find((o) => !seen.has(o.id)) : null);
+    (!hasWeather ? coordinated(candidates).find((o) => !seen.has(o.id)) : null);
   const milestone = state.feedback.length >= 5 && !state.learned;
   useEffect(() => {
     if (current && !milestone)
@@ -120,8 +122,16 @@ export default function Swipe({
   if (!current)
     return (
       <Empty
-        title="A little more understood."
-        text="You've explored the available combinations. Put what we've learned to work in your outfit studio, or add a few more pieces."
+        title={
+          hasWeather && !queue.length
+            ? "A warmer base comes first."
+            : "A little more understood."
+        }
+        text={
+          hasWeather && !queue.length
+            ? "Your closet needs a suitable long-sleeve base for today. Review the missing pieces in your outfit studio."
+            : "You've explored the available combinations. Put what we've learned to work in your outfit studio, or add a few more pieces."
+        }
         action="Open my outfit studio"
         onClick={onBuilder}
       />
@@ -221,6 +231,7 @@ export default function Swipe({
               </span>
             </div>
             <FlatLay outfit={current} />
+            <PaletteNote outfit={current} />
             {hasWeather && (
               <div className="weather-reason">
                 <span className="eyebrow">WHY THESE PIECES</span>

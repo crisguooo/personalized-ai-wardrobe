@@ -2195,3 +2195,23 @@ button:hover .garment {
   text-decoration: underline;
   color: var(--muted);
 }
+.palette-note {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 9px;
+  padding: 12px 18px;
+  color: var(--muted);
+  font-size: 11px;
+}
+.palette-swatches {
+  display: flex;
+  gap: 4px;
+}
+.palette-swatches i {
+  width: 13px;
+  height: 13px;
+  border: 1px solid #0002;
+  border-radius: 50%;
+}

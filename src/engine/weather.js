@@ -1,6 +1,8 @@
 import { BY_ID } from "../data/catalog.js";
 import { generate, score, validity } from "./wardrobe.js";
 
+import { coordinated, palette } from "./palette.js";
+
 export const today = () => new Date().toLocaleDateString("en-CA");
 export const toC = (value, unit) =>
   Math.round((unit === "F" ? ((value - 32) * 5) / 9 : value) * 1e6) / 1e6;
@@ -89,6 +91,27 @@ export function weatherRequirements(temp, weather, overrides = {}) {
       (items) =>
         has(items, "bottom", (i) => i.thermal.coverage >= (temp < 24 ? 3 : 2)),
     );
+  if (temp < 12 || temp + comfortOffset(weather) < 8)
+    add(
+      "winter-base",
+      "Warm long-sleeve base",
+      ["thermal-top", "turtleneck", "knit"],
+      (items) =>
+        has(items, "top", (i) => i.thermal.winterBase) ||
+        (has(
+          items,
+          "top",
+          (i) => i.thermal.coverage === 3 && i.archetype !== "linen-shirt",
+        ) &&
+          has(
+            items,
+            "midlayer",
+            (i) =>
+              !i.thermal.shell &&
+              i.thermal.coverage === 3 &&
+              i.thermal.insulationC >= 3,
+          )),
+    );
   if (temp < 22)
     add(
       "warm-base",
@@ -102,16 +125,7 @@ export function weatherRequirements(temp, weather, overrides = {}) {
           "top",
           (i) => guideFor(i, overrides).minC <= (temp < 20 ? 23 : 25),
         ) ||
-        has(
-          items,
-          "midlayer",
-          (i) => guideFor(i, overrides).insulationC >= 3,
-        ) ||
-        has(
-          items,
-          "outerwear",
-          (i) => guideFor(i, overrides).insulationC >= 10,
-        ),
+        has(items, "midlayer", (i) => guideFor(i, overrides).insulationC >= 3),
     );
   if (temp < 22)
     add(
@@ -198,6 +212,8 @@ export function weatherNeeds(ids, weather, overrides = {}) {
     missing = missing.filter((r) => r.key !== "covered-shoes");
   if (missing.some((r) => r.key === "warm-base"))
     missing = missing.filter((r) => r.key !== "sleeves");
+  if (missing.some((r) => r.key === "winter-base"))
+    missing = missing.filter((r) => !["warm-base", "sleeves"].includes(r.key));
   return { missing, requirements };
 }
 
@@ -290,10 +306,21 @@ export function weatherFit(outfit, weather, overrides = {}) {
 export function weatherCandidates(ids) {
   const candidates = generate(ids);
   const all = new Map(candidates.map((o) => [o.id, o]));
-  const extras = ["scarf", "beanie", "gloves"]
-    .map((key) => ids.find((id) => BY_ID[id]?.archetype === key))
-    .filter(Boolean);
   for (const outfit of candidates) {
+    const core = outfit.itemIds.filter(
+      (id) => BY_ID[id].category !== "accessory",
+    );
+    const extras = [];
+    for (const key of ["scarf", "beanie", "gloves"]) {
+      const options = ids.filter((id) => BY_ID[id]?.archetype === key);
+      options.sort(
+        (a, b) =>
+          palette({ itemIds: [...core, ...extras, a] }).penalty -
+            palette({ itemIds: [...core, ...extras, b] }).penalty ||
+          a.localeCompare(b),
+      );
+      if (options[0]) extras.push(options[0]);
+    }
     for (let count = 0; count <= extras.length; count++) {
       const bundle = extras.slice(0, count);
       const itemIds = [
@@ -314,15 +341,28 @@ export function rankForWeather(
   occasion = "Everyday",
 ) {
   if (!validRange(weather?.lowC, weather?.highC)) return candidates;
-  return candidates
+  const eligible = candidates
+    .filter((o) => !validity(o).length)
     .map((o) => ({ ...o, weatherFit: weatherFit(o, weather, overrides) }))
-    .sort(
-      (a, b) =>
-        a.weatherFit.penalty -
-          score(a, profile, occasion) * 2 -
-          (b.weatherFit.penalty - score(b, profile, occasion) * 2) ||
-        a.id.localeCompare(b.id),
+    .filter(
+      (o) =>
+        !o.weatherFit.missing.some((r) =>
+          ["winter-base", "thermal-base"].includes(r.key),
+        ),
     );
+  if (!eligible.length) return [];
+  const best = Math.min(...eligible.map((o) => o.weatherFit.penalty));
+  // Never trade away temperature suitability just to obtain a nicer palette.
+  return coordinated(
+    eligible.filter((o) => o.weatherFit.penalty <= best + 3),
+  ).sort(
+    (a, b) =>
+      palette(a).penalty - palette(b).penalty ||
+      a.weatherFit.penalty -
+        score(a, profile, occasion) * 2 -
+        (b.weatherFit.penalty - score(b, profile, occasion) * 2) ||
+      a.id.localeCompare(b.id),
+  );
 }
 export function weatherReason(outfit, weather, overrides = {}) {
   if (!outfit) return "";

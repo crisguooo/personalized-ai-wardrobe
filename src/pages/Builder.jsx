@@ -18,6 +18,7 @@ import {
 } from "../engine/wardrobe.js";
 import { event, appendEvents } from "../services/analytics.js";
 import Garment from "../components/Garment.jsx";
+import PaletteNote from "../components/PaletteNote.jsx";
 import FlatLay from "../components/FlatLay.jsx";
 import WeatherNeeds from "../components/WeatherNeeds.jsx";
 import {
@@ -25,7 +26,6 @@ import {
   validRange,
   rankForWeather,
   weatherReason,
-  weatherFit,
   temperature,
 } from "../engine/weather.js";
 const pct = (n) => Math.round(n * 100);
@@ -64,11 +64,31 @@ export default function Builder({
     [tab, setTab] = useState("studio");
   const available = state.closet.map((id) => BY_ID[id]);
   useEffect(() => {
-    if (current && validity(current, state.closet).length)
+    if (
+      !current ||
+      validity(current, state.closet).length ||
+      (hasWeather &&
+        !rankForWeather(
+          [current],
+          profile,
+          state.weather,
+          state.thermalOverrides,
+        ).length)
+    )
       setCurrent(order(candidates, occasion)[0]);
   }, [candidates]);
   function apply(outfit, name = "personalized_outfit_generated") {
     if (!outfit) return;
+    if (
+      hasWeather &&
+      !rankForWeather([outfit], profile, state.weather, state.thermalOverrides)
+        .length
+    ) {
+      notify(
+        "This temperature needs a warm long-sleeve base and one outer shell. Try another piece.",
+      );
+      return;
+    }
     setCurrent(outfit);
     setSelected(null);
     setState((s) =>
@@ -134,18 +154,7 @@ export default function Builder({
           features(o).colorful > f.colorful ||
           features(o).layered > f.layered,
       );
-    if (hasWeather && options.length) {
-      const best = Math.min(
-        ...options.map(
-          (o) => weatherFit(o, state.weather, state.thermalOverrides).penalty,
-        ),
-      );
-      options = options.filter(
-        (o) =>
-          weatherFit(o, state.weather, state.thermalOverrides).penalty <=
-          best + 3,
-      );
-    }
+    options = order(options, occasion);
     options.sort((a, b) => {
       const changed = (o) =>
         o.itemIds.filter((id) => !current.itemIds.includes(id)).length;
@@ -219,6 +228,20 @@ export default function Builder({
                 className="saved-card"
                 key={o.id}
                 onClick={() => {
+                  if (
+                    hasWeather &&
+                    !rankForWeather(
+                      [o],
+                      profile,
+                      state.weather,
+                      state.thermalOverrides,
+                    ).length
+                  ) {
+                    notify(
+                      "This saved look needs a warmer base for today. Choose a new look.",
+                    );
+                    return;
+                  }
                   setCurrent(o);
                   setOccasion(o.occasion ?? "Everyday");
                   setTab("studio");
@@ -236,6 +259,16 @@ export default function Builder({
               studio.
             </div>
           )}
+        </div>
+      ) : !current ? (
+        <div className="inline-empty">
+          <p>
+            Add a warm long-sleeve base and the missing weather pieces to build
+            a suitable outfit.
+          </p>
+          <button className="primary" onClick={onWeather}>
+            Review today’s needs
+          </button>
         </div>
       ) : (
         <div className="builder-layout">
@@ -321,6 +354,7 @@ export default function Builder({
               selected={selected}
               onSelect={setSelected}
             />
+            <PaletteNote outfit={current} />
             {hasWeather && (
               <div className="weather-reason">
                 <span className="eyebrow">WHY THESE PIECES</span>

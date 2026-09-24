@@ -70,7 +70,7 @@ npm run format:check  # source formatting
 ## Architecture
 
 ```text
-src/data/catalog.js       Canonical metadata, 60 archetypes × 8 colors
+src/data/catalog.js       Canonical metadata, 72 archetypes × 12 colors
 src/data/thermal.js       Editable starting temperature ranges and layer insulation
 src/components/          Shared garment renderer, flat-lay composition
 src/engine/wardrobe.js    Validity → candidates → features → preferences → ranking
@@ -101,7 +101,11 @@ Knee-high boots and the scarf use original local SVG illustrations alongside the
 
 ### Outfit generation
 
-Hard constraints require exactly one top, one bottom and one pair of shoes, with at most one midlayer and outer layer. Accessories use separate head, neck, hands, bag, waist, jewelry and eyes slots, so a beanie, scarf and gloves can be worn together. Winter coats support appropriate insulating midlayers. Unknown IDs, duplicates, unowned items and incompatible bulky bases are rejected. Personal taste is a soft signal, separate from validity.
+Hard constraints require exactly one top, one bottom and one pair of shoes, with at most one midlayer and outer layer. Accessories use separate head, neck, hands, bag, waist, jewelry and eyes slots, so a beanie, scarf and gloves can be worn together. Only one outer shell is allowed: fleece jackets and padded vests cannot stack with another jacket or long coat. Knit cardigans can layer beneath coats. Unknown IDs, duplicates, unowned items and incompatible bulky bases are rejected. Personal taste is a soft signal, separate from validity.
+
+Closet keeps the two-list layout and adds six category buttons. The catalog includes cashmere knits, flannel shirts, ribbed tops, long cardigans, wool trousers, lined leggings, pleated skirts, cotton shorts, cropped jackets, short wool jackets, Chelsea boots and crossbody bags. Cream, camel, olive and burgundy join the original eight colors.
+
+Automatic looks prefer no more than three distinct colors across clothing, shoes and accessories, with one tonal family plus neutrals. Winter accessory variants are chosen against the outfit palette. The palette note shows actual colors; when the owned wardrobe cannot achieve a coordinated palette at the best weather fit, it explicitly labels the closest available match. Color preferences never bypass the winter base or outer-shell constraints.
 
 Generation is a deterministic bounded sample of up to 900 candidates. Initial exploration maximizes feature and item diversity. Learned ranking combines preference scores with an occasion prior. Local refinements favor candidates changing the fewest pieces. **Swap this** substitutes exactly one owned item from the same category and revalidates the result.
 
@@ -109,7 +113,9 @@ Generation is a deterministic bounded sample of up to 900 candidates. Initial ex
 
 Today accepts a manually entered daily low and high in either unit; switching units converts existing inputs. Temperatures are stored canonically in Celsius with a local date. Opening Today on a new day asks for an updated forecast. No location permission or weather service is required.
 
-Each of the 480 variants inherits an editable base temperature guide, coverage value and insulation contribution. The default tee range is **27–30°C**. Approximately every 2°C lower, the decision ladder asks for longer bottoms, longer sleeves, a warmer base or an extra layer. Full-length bottoms and shoes contribute modest warmth reductions; coats contribute more. Personal edits to both ends of a piece's range affect the outfit estimate.
+Each of the 864 variants inherits an editable base temperature guide, coverage value and insulation contribution. The default tee range is **27–30°C**. Approximately every 2°C lower, the decision ladder asks for longer bottoms, longer sleeves, a warmer base or an extra layer. Full-length bottoms and shoes contribute modest warmth reductions; coats contribute more. Personal edits to both ends of a piece's range affect the outfit estimate.
+
+Below an effective **12°C**, or an actual **8°C** regardless of running warm, a warm long-sleeve base is mandatory. A long-sleeve top with an insulating knit midlayer also qualifies; a short sleeve never does. Coats and edited tee temperature ranges cannot substitute for this requirement. Missing bases suppress unsuitable recommendations and produce a concrete add-piece checklist in Today and the studio. Below effective −10°C a thermal top is mandatory. Manual studio changes and opening saved looks use the same winter-base guard.
 
 Explicit coverage rules supplement the warmth estimate: below **8°C**, require a winter coat; below **5°C**, lined pants and boots; below **2°C**, a warm hat and gloves; below **0°C**, an insulated winter coat and winter boots. Scarves are required below 10°C. Personal comfort shifts the effective temperature. Cosmetic accessories cannot satisfy winter requirements, and editing a tee's range cannot turn it into a winter coat.
 
@@ -168,7 +174,7 @@ The browser demo was manually exercised through selection, five feedback actions
 ## Current limitations
 
 - Local single-browser prototype: no accounts, sync or deployment configured.
-- 60 representative archetypes with eight colors each; actual fabric weights and individual garment measurements are not captured.
+- 72 representative archetypes with twelve colors each; actual fabric weights and individual garment measurements are not captured.
 - Atlas cells and tinting are approximation artwork; long garments may have tight crop margins. Per-item transparent assets are the natural next step.
 - Occasion, compatibility and preference scores are explainable heuristics, not a professionally validated styling model. A small closet limits variety, and five ratings yield tentative signals.
 - Gap search uses a fixed canonical color for each missing archetype and bounded combinations; it does not search every possible color or guarantee the global optimum.

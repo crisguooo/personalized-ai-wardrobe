@@ -8,6 +8,7 @@ import {
   Check,
 } from "lucide-react";
 import { BY_ID } from "../data/catalog.js";
+import PaletteNote from "../components/PaletteNote.jsx";
 import FlatLay from "../components/FlatLay.jsx";
 import Garment from "../components/Garment.jsx";
 import WeatherNeeds from "../components/WeatherNeeds.jsx";
@@ -340,6 +341,7 @@ export default function Today({
             <>
               <div className="today-outfit">
                 <FlatLay outfit={current} />
+                <PaletteNote outfit={current} />
                 <div className="weather-reason">
                   <span className="eyebrow">WHY THESE PIECES</span>
                   <p>
@@ -393,7 +395,10 @@ export default function Today({
               </details>
             </>
           ) : (
-            <p>Add a top, bottom and shoes to build today’s outfit.</p>
+            <p>
+              We need a suitable base before building this look. Add the missing
+              pieces above; a warm coat cannot replace a warm long-sleeve base.
+            </p>
           )}
           <div className="today-finish">
             <button

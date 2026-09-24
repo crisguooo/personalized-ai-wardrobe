@@ -44,8 +44,8 @@ const fitted = outfit(
   "loafers:black",
 );
 test("canonical metadata is complete, unique and consistent with art registry", () => {
-  assert.equal(ARCHETYPES.length, 60);
-  assert.equal(CATALOG.length, 480);
+  assert.equal(ARCHETYPES.length, 72);
+  assert.equal(CATALOG.length, 864);
   assert.equal(new Set(CATALOG.map((i) => i.id)).size, CATALOG.length);
   for (const i of CATALOG) {
     for (const k of [

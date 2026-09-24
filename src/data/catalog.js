@@ -2,6 +2,10 @@ import { thermalGuide } from "./thermal.js";
 import { EXTRA_ROWS, EXTRA_SHAPES } from "./extraGarments.js";
 /** Canonical archetypes, not brands or retailer SKUs. All artwork is original. */
 export const COLORS = {
+  cream: { hex: "#e3d7ba" },
+  camel: { hex: "#af8558" },
+  olive: { hex: "#77794f" },
+  burgundy: { hex: "#763e49" },
   white: { hex: "#eeeae1", filter: "brightness(1.7)" },
   black: { hex: "#303033", filter: "brightness(.38)" },
   grey: { hex: "#92918d", filter: "brightness(.95)" },
@@ -457,7 +461,15 @@ export const ARCHETYPES = rows.map(
               : null,
     length: ["baby-tee", "tube"].includes(key)
       ? "cropped"
-      : ["trench", "wool-coat", "midi-skirt"].includes(key)
+      : [
+            "trench",
+            "wool-coat",
+            "midi-skirt",
+            "long-puffer",
+            "parka",
+            "long-cardigan",
+            "pleated-skirt",
+          ].includes(key)
         ? "long"
         : "regular",
   }),

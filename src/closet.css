@@ -18,6 +18,28 @@
 .clothes-column {
   min-width: 0;
 }
+.closet-categories {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+  padding: 12px;
+  border-bottom: 1px solid var(--line);
+}
+.closet-categories button {
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  padding: 8px 3px;
+  font-size: 11px;
+  color: var(--muted);
+}
+.closet-categories button[aria-pressed="true"] {
+  color: var(--red);
+  background: #f5e8df;
+  border-color: #d5aaa0;
+}
+.clothes-column:has(.closet-categories) .clothes-scroll {
+  height: clamp(320px, calc(100dvh - 405px), 610px);
+}
 .clothes-column + .clothes-column {
   border-left: 1px solid var(--line);
   background: #f2eee4;
@@ -136,6 +158,15 @@
   border-radius: 30px;
 }
 @media (max-width: 600px) {
+  .closet-categories {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    padding: 8px 5px;
+    gap: 4px;
+  }
+  .closet-categories button {
+    font-size: 9px;
+    padding: 7px 1px;
+  }
   .simple-closet {
     padding-top: 24px;
   }

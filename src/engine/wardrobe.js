@@ -1,4 +1,5 @@
 import { ARCHETYPES, BY_ID, DEFAULT_COLORS } from "../data/catalog.js";
+import { coordinated, palette } from "./palette.js";
 export const REASONS = [
   "Too basic",
   "Too fitted",
@@ -69,6 +70,8 @@ export function validity(outfit, ownedIds) {
   const top = items.find((i) => i.category === "top"),
     mid = items.find((i) => i.category === "midlayer"),
     outer = items.find((i) => i.category === "outerwear");
+  if (items.filter((i) => i.thermal.shell).length > 1)
+    errors.push("Choose one jacket or coat, not two outer shells");
   if (top?.warmth >= 3 && mid)
     errors.push("Bulky base cannot fit under a mid-layer");
   if (
@@ -87,17 +90,23 @@ export function features(outfit) {
     bottom = items.find((i) => i.category === "bottom");
   if (!top || !bottom) return {};
   const colors = [...new Set(items.map((i) => i.color))],
-    dark = colors.some((c) => ["black", "navy", "brown"].includes(c)),
-    light = colors.some((c) => ["white", "beige"].includes(c));
+    dark = colors.some((c) =>
+      ["black", "navy", "brown", "burgundy"].includes(c),
+    ),
+    light = colors.some((c) => ["white", "beige", "cream"].includes(c));
   const f = {
     relaxed: +loose(top),
     fitted: +slim(top),
     straight: +(bottom.fit === "straight"),
     wide: +(bottom.fit === "wide-leg"),
     skinny: +(bottom.fit === "skinny"),
-    neutral: +colors.every((c) => !["red", "blue"].includes(c)),
-    earth: +colors.some((c) => ["brown", "beige"].includes(c)),
-    colorful: +colors.includes("red"),
+    neutral: +colors.every(
+      (c) => !["red", "blue", "burgundy", "olive"].includes(c),
+    ),
+    earth: +colors.some((c) =>
+      ["brown", "beige", "camel", "olive"].includes(c),
+    ),
+    colorful: +colors.some((c) => ["red", "burgundy"].includes(c)),
     monochrome: +(colors.length === 1),
     contrast: +(dark && light),
     layered: +items.some((i) => ["midlayer", "outerwear"].includes(i.category)),
@@ -254,8 +263,17 @@ export function generate(ownedIds, { requiredId, limit = 900 } = {}) {
       ...mids.map((m) => [m]),
       ...outers.map((o) => [o]),
     ];
-    if (mids.length && outers.length)
-      arrangements.push([mids[idx % mids.length], outers[idx % outers.length]]);
+    for (const outer of outers) {
+      const compatible = mids.filter(
+        (mid) => !validity(makeOutfit([...trio, mid, outer])).length,
+      );
+      compatible.sort(
+        (a, b) =>
+          palette(makeOutfit([...trio, a, outer])).penalty -
+          palette(makeOutfit([...trio, b, outer])).penalty,
+      );
+      for (const mid of compatible.slice(0, 3)) arrangements.push([mid, outer]);
+    }
     for (const [j, layers] of arrangements.entries()) {
       let pieces = [...trio, ...layers];
       if (
@@ -276,7 +294,7 @@ export function generate(ownedIds, { requiredId, limit = 900 } = {}) {
     .slice(0, limit);
 }
 export function explore(candidates, count = 12) {
-  const pool = [...candidates];
+  const pool = [...coordinated(candidates)];
   if (!pool.length) return [];
   const picked = [pool.shift()];
   while (picked.length < count && pool.length) {
@@ -303,8 +321,9 @@ export function explore(candidates, count = 12) {
   return picked;
 }
 export function rank(candidates, profile, occasion = "Everyday") {
-  return [...candidates].sort(
+  return coordinated(candidates).sort(
     (a, b) =>
+      palette(a).penalty - palette(b).penalty ||
       score(b, profile, occasion) - score(a, profile, occasion) ||
       a.id.localeCompare(b.id),
   );

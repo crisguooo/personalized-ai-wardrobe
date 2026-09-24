@@ -11,6 +11,7 @@ import Garment from "../components/Garment.jsx";
 import "../closet.css";
 export default function Closet({ state, owned, toggle, start, ready }) {
   const [colors, setColors] = useState({});
+  const [categoryFilter, setCategoryFilter] = useState("top");
   return (
     <section className="simple-closet">
       <h1>
@@ -19,12 +20,24 @@ export default function Closet({ state, owned, toggle, start, ready }) {
       <div className="closet-lists">
         <section className="clothes-column" aria-label="All clothes">
           <h2>All clothes</h2>
+          <div className="closet-categories" aria-label="Clothing categories">
+            {CATEGORIES.filter(([key]) => key !== "all").map(([key, label]) => (
+              <button
+                key={key}
+                aria-pressed={categoryFilter === key}
+                onClick={() => setCategoryFilter(key)}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
           <div
+            key={categoryFilter}
             className="clothes-scroll"
             tabIndex={0}
             aria-label="Browse all clothes"
           >
-            {CATEGORIES.filter(([key]) => key !== "all").map(
+            {CATEGORIES.filter(([key]) => key === categoryFilter).map(
               ([category, name]) => (
                 <div key={category} className="clothes-group">
                   <h3>{name}</h3>
@@ -90,6 +103,7 @@ export default function Closet({ state, owned, toggle, start, ready }) {
         >
           <h2>My clothes</h2>
           <div
+            key={categoryFilter}
             className="clothes-scroll"
             tabIndex={0}
             aria-label="Clothes I own"

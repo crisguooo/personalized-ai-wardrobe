@@ -137,8 +137,10 @@ test("a limited closet gets an honest warmth mismatch instead of invented items"
   ]);
   const cold = { ...weather, lowC: -5, highC: 3 };
   const best = rankForWeather(only, learn([]), cold)[0];
-  assert.match(weatherReason(best, cold), /incomplete.*insulated winter coat/);
-  assert.equal(best.itemIds.length, 3);
+  assert.equal(best, undefined);
+  const missing = weatherNeeds(only[0].itemIds, cold).missing;
+  assert(missing.some((r) => r.key === "winter-base"));
+  assert(missing.some((r) => r.label === "Insulated winter coat"));
 });
 test("weather, personal experience and per-piece guides survive persistence; invalid data is discarded", () => {
   const state = sanitize({
