@@ -1,5 +1,6 @@
 import { BY_ID } from "../data/catalog.js";
 import { learn, validity } from "../engine/wardrobe.js";
+import { freshOnboarding, normalizeOnboarding } from "../engine/onboarding.js";
 export const STORAGE_KEY = "wearwell:v1";
 export const freshState = () => ({
   version: 1,
@@ -9,6 +10,7 @@ export const freshState = () => ({
   saved: [],
   generated: [],
   onboarded: false,
+  onboarding: freshOnboarding(),
   learned: false,
   events: [],
 });
@@ -41,6 +43,7 @@ export function sanitize(raw) {
     saved: outfits("saved"),
     generated: outfits("generated").slice(-60),
     onboarded: raw.onboarded === true,
+    onboarding: normalizeOnboarding(raw.onboarding),
     learned: raw.learned === true,
     events: Array.isArray(raw.events) ? raw.events.slice(-500) : [],
   };

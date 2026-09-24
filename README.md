@@ -2,7 +2,7 @@
 
 **Your wardrobe learns your taste.**
 
-Wearwell is a desktop-first consumer wardrobe prototype: quickly select familiar clothing archetypes, rate outfits, discover what those decisions have in common, and make better combinations from clothes you already own. Its second core feature identifies missing archetypes by the **preference-weighted new outfits** they can unlock.
+Wearwell is a consumer wardrobe prototype with focused, app-like onboarding on mobile and desktop: select familiar silhouettes and their colors, rate outfits, discover what those decisions have in common, and make better combinations from clothes you already own. Its second core feature identifies missing archetypes by the **preference-weighted new outfits** they can unlock.
 
 This project lives in a private GitHub repository. It is an independent implementation, not a fork of Cher's Closet.
 
@@ -12,8 +12,8 @@ A closet inventory does not tell you why some combinations feel like you and oth
 
 ## A three-minute demo
 
-1. Open **Closet**, select pieces and color swatches, or add the 18-piece starter closet.
-2. Choose **Find my style**. A complete outfit needs a top, bottom and shoes.
+1. Start with **Build my closet**. Choose top silhouettes, then the colors you own for each; repeat for bottoms and shoes. Every silhouette/color combination becomes a separate piece.
+2. With eight pieces covering tops, bottoms and shoes, choose **Start with these →**. Layers, outerwear and accessories are optional and skippable; smaller closets can also finish once the three essentials are covered. The payoff shows your selected pieces, and **Teach Wearwell my style** opens Swipe & Learn directly.
 3. Rate five deliberately varied outfits with **Love this** or **Not for me**. Dislike reasons are optional.
 4. Read **We learned something about you**. These insights are computed from those exact ratings, including an honest empty state when a signal is missing.
 5. Continue to a batch ranked by the learned profile. Rate another outfit to populate the before/after acceptance comparison.
@@ -24,12 +24,15 @@ A closet inventory does not tell you why some combinations feel like you and oth
 
 **My style → Start a fresh demo** resets this browser's data after confirmation. Starter clothing is seeded only on request; feedback and preferences are never pre-seeded.
 
+First-time setup hides all product navigation, catalog, search, filters and dashboard content. It uses one question per screen, large garment choices, a simple progress indicator, Back and a fixed bottom action. Both selections and the current step survive refresh. Full product navigation appears after setup completion; returning users can manage their inventory in Closet.
+
 ## Screens and visual system
 
 The interface uses cream paper, tomato-red controls, editorial serif typography and original clothing illustrations. Desktop and 390px mobile layouts were manually checked.
 
 | Screen        | Preview / screenshot placeholder                                          |
 | ------------- | ------------------------------------------------------------------------- |
+| First-time setup | Welcome, silhouette choices, individual colors, optional extras, closet payoff |
 | Closet        | Clothing grid, category and fit filters, color swatches, owned-item count |
 | Swipe & Learn | Flat-lay card, optional reasons, fifth-rating insight transition          |
 | Outfit studio | Occasion picker, owned-clothing rail, single-item swap, saved looks       |
@@ -69,6 +72,7 @@ npm run format:check  # source formatting
 src/data/catalog.js       Canonical metadata, 36 archetypes × 8 colors
 src/components/          Shared garment renderer, flat-lay composition
 src/engine/wardrobe.js    Validity → candidates → features → preferences → ranking
+src/engine/onboarding.js  Essential-first setup groups, resumable draft, early entry
 src/services/storage.js  Versioned localStorage repository and validation
 src/services/analytics.js Local event abstraction, bounded to 500 entries
 src/services/ai.js       Same-origin summary request
@@ -77,6 +81,7 @@ src/pages/               Closet, guided feedback, studio, style and missing view
 server/provider.js       Provider-neutral summary boundary with no-key fallback
 server/index.js          Local HTTP API; provider secrets stay server-side
 tests/engine.test.js      Core non-visual tests
+tests/onboarding.test.js  Early entry, optional categories, draft persistence, migration
 docs/REFERENCE_REVIEW.md  Upstream inspection, reuse decisions, original plan
 ```
 
@@ -130,7 +135,7 @@ Only the selected preference labels go to the model, not the closet inventory or
 
 ### Persistence and instrumentation
 
-`wearwell:v1` stores selected IDs, every feedback event, profile, saved looks, the latest 60 generated looks and onboarding/insight flags. Storage errors produce a visible notice. Unknown catalog entries and invalid saved outfit ownership are removed on load. Removing an owned piece invalidates saved/generated outfits containing it, while historical feedback remains for taste learning.
+`wearwell:v1` stores selected IDs, every feedback event, profile, saved looks, the latest 60 generated looks, the in-progress onboarding draft and completion/insight flags. Existing completed users retain their normal product experience. Storage errors produce a visible notice. Unknown catalog entries and invalid saved outfit ownership are removed on load. Removing an owned piece invalidates saved/generated outfits containing it, while historical feedback remains for taste learning.
 
 Events include closet additions/completion, outfit views, likes/dislikes, reason selection, profile generation, personalized generation, swaps and missing-item exploration. They stay local; no analytics provider or network telemetry is connected. Style DNA displays observed acceptance before/after personalization. Those tiny-sample figures are descriptive, not proof of model accuracy.
 

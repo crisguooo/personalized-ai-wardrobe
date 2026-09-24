@@ -11,6 +11,7 @@ import Swipe from "./pages/Swipe.jsx";
 import Builder from "./pages/Builder.jsx";
 import Style from "./pages/Style.jsx";
 import Missing from "./pages/Missing.jsx";
+import Onboarding from "./pages/Onboarding.jsx";
 const adapter = createStorage({
   getItem: (key) => localStorage.getItem(key),
   setItem: (key, value) => localStorage.setItem(key, value),
@@ -85,6 +86,14 @@ export default function App() {
       );
     });
   };
+  if (!state.onboarded) {
+    return (
+      <>
+        <ColorFilters />
+        <Onboarding {...{ state, setState, storageError }} onComplete={start} />
+      </>
+    );
+  }
   return (
     <>
       <ColorFilters />

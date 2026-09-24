@@ -2,13 +2,27 @@
 
 ## Automated
 
-- 12 Node tests pass, covering metadata, validity, owned-only generation, exploration, targeted feedback, opposite taste profiles, ranking uplift, single-item swaps, weighted gaps, storage and the no-key provider.
+- 16 Node tests pass, covering metadata, validity, owned-only generation, exploration, targeted feedback, opposite taste profiles, ranking uplift, single-item swaps, weighted gaps, storage, the no-key provider, early setup completion, optional groups, resumable drafts and returning-user migration.
 - Vite production build passes.
+- Source formatting check passes.
 - npm dependency audit reported zero vulnerabilities at install time.
 
-## Browser demo
+## First-time onboarding redesign
 
-Verified in Chrome on localhost with a newly created application origin:
+Verified against a production preview using isolated localhost origins, preserving the user's active development closet:
+
+1. Fresh entry displays Welcome with no product navigation, catalog, search, filters, sidebar or statistics.
+2. Selected two top silhouettes and multiple colors. Reload restored the exact color screen and selected colors.
+3. Added four tops, three bottoms and one pair of shoes. The eighth piece immediately exposed **Start with these** without visiting optional categories.
+4. The payoff displayed **8 pieces** and the eight selected garment variants.
+5. Back returned to the previous shoe color screen. **Keep adding** continued to layers; Skip worked through layers, outerwear and accessories.
+6. **Teach Wearwell my style** opened Swipe & Learn directly with zero ratings. Full navigation appeared only after completion.
+7. Reload preserved the completed state and the normal product experience.
+8. Welcome and color selection visually checked at 390 × 844. Document width matched viewport width, with no horizontal overflow and no product navigation. The temporary viewport override was restored afterward.
+
+## Original product-loop browser demo
+
+Verified before the onboarding redesign in Chrome on localhost with a newly created application origin. The catalog/starter entry below is now available after onboarding:
 
 1. Empty closet shows disabled learning until required categories are present.
 2. Starter adds 18 pieces and enables learning.
