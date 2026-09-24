@@ -61,6 +61,44 @@ export const OCCASIONS = {
     },
   },
 };
+// Preserve the personal-preference budget; split the quality budget among
+// construction, whole-look coherence and the original occasion dimensions.
+for (const plan of Object.values(OCCASIONS)) {
+  const added = {
+    formula: 0.055,
+    cohesion: 0.09,
+    intentionality: 0.1,
+    shoeCompatibility: 0.06,
+    directionCoherence: 0.04,
+    visualWeight: 0.045,
+    styleCoherence: 0.02,
+    thermalCoherence: 0.025,
+    focalHierarchy: 0.025,
+    proportion: 0.025,
+    ...(!plan.weights.occasion ? { occasion: 0.04 } : {}),
+  };
+  const budget = Object.values(added).reduce((a, b) => a + b, 0);
+  const personal = plan.weights.personal;
+  plan.weights = Object.fromEntries(
+    Object.entries(plan.weights).map(([key, value]) => [
+      key,
+      key === "personal"
+        ? value
+        : (value * (1 - personal - budget)) / (1 - personal),
+    ]),
+  );
+  Object.assign(plan.weights, added);
+  // Occasion is an input to the concept, not an afterthought in the score.
+  const occasionBudget = 0.15;
+  const extra = occasionBudget - plan.weights.occasion;
+  if (extra > 0) {
+    const remainder = 1 - plan.weights.personal - plan.weights.occasion;
+    for (const key of Object.keys(plan.weights))
+      if (!["personal", "occasion"].includes(key))
+        plan.weights[key] *= (remainder - extra) / remainder;
+    plan.weights.occasion = occasionBudget;
+  }
+}
 export const REFINEMENTS = {
   "Less basic": { interest: 0.28, weights: { interest: 0.18 } },
   "More casual": {

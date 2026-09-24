@@ -220,6 +220,13 @@
   line-height: 1.6;
   margin: 9px 0 0;
 }
+.weather-reason .optional-finishing-touch {
+  font-family: inherit;
+  font-size: 14px;
+  padding-top: 12px;
+  margin-top: 16px;
+  border-top: 1px solid var(--line);
+}
 .today-actions {
   display: flex;
   align-items: center;

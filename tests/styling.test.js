@@ -26,9 +26,14 @@ const winter = [
 test("winter never recommends a short sleeve base even with a puffer, warm preference or edited tee guide", () => {
   for (const comfort of ["default", "warm", "cold"]) {
     const w = { ...weather(-3, 8), comfort };
-    const options = rankForWeather(weatherCandidates(winter), learn([]), w, {
-      "crew-tee:black": { minC: -30, maxC: 40 },
-    });
+    const options = rankForWeather(
+      weatherCandidates(winter, learn([]), weather(-3, 1)),
+      learn([]),
+      w,
+      {
+        "crew-tee:black": { minC: -30, maxC: 40 },
+      },
+    );
     assert(options.length);
     assert(options.every((o) => !o.itemIds.includes("crew-tee:black")));
     const onlyTees = winter.filter((id) => id !== "thermal-top:black");
@@ -50,7 +55,7 @@ test("a knit midlayer can warm a long sleeve base but cannot rescue short sleeve
     ),
   ];
   const options = rankForWeather(
-    weatherCandidates(base),
+    weatherCandidates(base, learn([]), weather(3, 10)),
     learn([]),
     weather(3, 10),
   );
@@ -85,7 +90,7 @@ test("one outer shell only, while cardigan plus a long coat remains valid", () =
     [],
   );
 });
-test("recommendations prefer up to three colors and a single tonal family including accessories", () => {
+test("coherent tonal color ranks well while expressive strategies remain available", () => {
   const tonal = outfit(
     "knit:cream",
     "trousers:brown",
@@ -104,19 +109,20 @@ test("recommendations prefer up to three colors and a single tonal family includ
   assert.equal(rank([mixed, tonal], learn([]))[0].id, tonal.id);
   const fallback = coordinated([mixed]);
   assert.equal(fallback.length, 1);
-  assert.match(palette(fallback[0]).label, /Expressive palette/);
+  assert(palette(fallback[0]).strategy);
 });
 test("winter accessory variants are matched to the outfit without dropping required warmth", () => {
   const options = rankForWeather(
-    weatherCandidates(winter),
+    weatherCandidates(winter, learn([]), weather(-3, 1)),
     learn([]),
     weather(-3, 1),
   );
   assert(options.length);
   const best = options[0];
   assert.equal(best.weatherFit.missing.length, 0);
-  assert(palette(best).colors.length <= 3);
-  assert(best.itemIds.includes("scarf:black"));
+  assert(palette(best).score > 0.7);
+  assert(best.itemIds.some((id) => BY_ID[id].archetype === "scarf"));
+  assert(palette(best).accentShare <= 0.25);
   for (const key of ["beanie", "gloves"])
     assert(best.itemIds.some((id) => BY_ID[id].archetype === key));
 });
@@ -137,7 +143,7 @@ test("expanded pieces have categories, illustrations and useful thermal guides",
   ]) {
     const item = BY_ID[`${key}:olive`];
     assert(ARCHETYPES.some((a) => a.key === key));
-    assert.equal(item.assetKey, "extra-vector");
+    assert.equal(item.assetKey, "wardrobe-seasonal-atlas");
     if (item.category !== "accessory") assert(item.thermal.active);
   }
 });

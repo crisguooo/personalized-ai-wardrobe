@@ -1,8 +1,11 @@
-import { stylingMetadata, COLOR_METADATA } from "./styling.js";
+import { layerMetadata } from "./layers.js";
+import { stylingMetadata, COLOR_METADATA, garmentColor } from "./styling.js";
 import { thermalGuide } from "./thermal.js";
-import { EXTRA_ROWS, EXTRA_SHAPES } from "./extraGarments.js";
+import { EXTRA_ROWS } from "./extraGarments.js";
 /** Canonical archetypes, not brands or retailer SKUs. All artwork is original. */
 export const COLORS = {
+  "powder-blue": { hex: "#b8cfdf" },
+  charcoal: { hex: "#46474b" },
   cream: { hex: "#e3d7ba" },
   camel: { hex: "#af8558" },
   olive: { hex: "#77794f" },
@@ -476,7 +479,8 @@ export const ARCHETYPES = rows
           : "regular",
     }),
   )
-  .map((a) => ({ ...a, ...stylingMetadata(a) }));
+  .map((a) => ({ ...a, ...stylingMetadata(a) }))
+  .map((a) => ({ ...a, ...layerMetadata(a) }));
 export const CATALOG = ARCHETYPES.flatMap((a) =>
   Object.keys(COLORS).map((color) => ({
     ...a,
@@ -484,11 +488,8 @@ export const CATALOG = ARCHETYPES.flatMap((a) =>
     archetype: a.key,
     color,
     colorFamily: COLOR_METADATA[color].family,
-    assetKey: EXTRA_SHAPES[a.key]
-      ? "extra-vector"
-      : ["tall-boots", "scarf"].includes(a.key)
-        ? a.key
-        : "wardrobe-atlas",
+    colorSpec: garmentColor(a, color),
+    assetKey: a.sprite < 36 ? "wardrobe-atlas" : "wardrobe-seasonal-atlas",
   })),
 );
 export const BY_ID = Object.fromEntries(CATALOG.map((i) => [i.id, i]));

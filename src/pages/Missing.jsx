@@ -1,147 +1,165 @@
 import { useState, useEffect, useMemo } from "react";
-import { ArrowUpRight } from "lucide-react";
-import { gaps, preferenceScore } from "../engine/wardrobe.js";
+import { ArrowLeft, ArrowRight, Plus, Check, ChevronDown } from "lucide-react";
+import { gaps } from "../engine/wardrobe.js";
+import { BY_ID, COLORS } from "../data/catalog.js";
 import Garment from "../components/Garment.jsx";
 import FlatLay from "../components/FlatLay.jsx";
-const pct = (n) => Math.round(n * 100);
-export default function Missing({ state, profile, track }) {
+import "../missing.css";
+
+function Piece({ gap, onAdd }) {
+  const [showColors, setShowColors] = useState(false);
+  const [color, setColor] = useState(gap.item.color);
+  const [exploring, setExploring] = useState(false);
+  const [example, setExample] = useState(0);
+  const item = BY_ID[`${gap.item.archetype}:${color}`];
+  return (
+    <article
+      className="missing-piece"
+      id="missing-piece"
+      aria-label={gap.item.name}
+    >
+      <div className="missing-visual">
+        <Garment item={showColors ? item : gap.item} />
+      </div>
+      <h2>{gap.item.name}</h2>
+      <p className="missing-reason">{gap.shortReason}</p>
+      <p className="missing-count">
+        +{gap.likely} outfit possibilities <small>estimated</small>
+      </p>
+      <div className="missing-actions">
+        <button
+          aria-expanded={exploring}
+          aria-controls="missing-ideas"
+          onClick={() => {
+            setExploring(!exploring);
+            setShowColors(false);
+          }}
+        >
+          Explore outfits <ArrowRight size={15} />
+        </button>
+        <button
+          aria-expanded={showColors}
+          aria-controls="missing-colors"
+          onClick={() => {
+            setShowColors(!showColors);
+            setExploring(false);
+          }}
+        >
+          <Plus size={15} /> Already have this?
+        </button>
+      </div>
+      {showColors && (
+        <div className="missing-colors" id="missing-colors">
+          <p>
+            Which color do you own? <b>{color}</b>
+          </p>
+          <div
+            className="missing-swatches"
+            role="group"
+            aria-label="Owned color"
+          >
+            {Object.entries(COLORS).map(([name, swatch]) => (
+              <button
+                key={name}
+                aria-label={name}
+                aria-pressed={color === name}
+                title={name}
+                style={{ "--swatch": swatch.hex }}
+                onClick={() => setColor(name)}
+              >
+                {color === name && <Check size={15} />}
+              </button>
+            ))}
+          </div>
+          <button
+            className="primary missing-add"
+            onClick={() => onAdd(item.id)}
+          >
+            <Plus size={16} /> Add to closet
+          </button>
+        </div>
+      )}
+      {exploring && (
+        <div className="missing-ideas" id="missing-ideas">
+          <FlatLay outfit={gap.examples[example]} ghostId={gap.item.id} small />
+          <div className="missing-pager">
+            <button
+              aria-label="Previous outfit"
+              disabled={example === 0}
+              onClick={() => setExample(example - 1)}
+            >
+              <ArrowLeft size={17} />
+            </button>
+            <span>
+              {example + 1} / {gap.examples.length} · everything else is yours
+            </span>
+            <button
+              aria-label="Next outfit"
+              disabled={example === gap.examples.length - 1}
+              onClick={() => setExample(example + 1)}
+            >
+              <ArrowRight size={17} />
+            </button>
+          </div>
+        </div>
+      )}
+    </article>
+  );
+}
+
+export default function Missing({ state, profile, track, onAdd }) {
   const results = useMemo(
-      () => gaps(state.closet, profile),
-      [state.closet, profile],
-    ),
-    [active, setActive] = useState(0);
-  const gap = results[Math.min(active, results.length - 1)];
+    () => gaps(state.closet, profile),
+    [state.closet, profile],
+  );
+  const [active, setActive] = useState(null);
+  const [added, setAdded] = useState("");
+  const gap = results.find((g) => g.item.id === active);
   useEffect(() => {
     if (gap)
       track("missing_item_viewed", { itemId: gap.item.id, likely: gap.likely });
   }, [gap?.item.id]);
-  if (!gap)
-    return (
-      <div className="empty">
-        <h1>Nothing obvious missing.</h1>
-        <p>
-          More outfit ratings may reveal new possibilities. Your current closet
-          is a good place to start.
-        </p>
-      </div>
-    );
   return (
-    <section className="missing-page">
-      <div className="page-heading compact">
-        <div>
-          <div className="eyebrow">MAKE MORE OF WHAT YOU OWN</div>
-          <h1>
-            One new piece.
-            <br />
-            <em>So many possibilities.</em>
-          </h1>
-          <p>
-            Your biggest wardrobe gaps, ranked by how much they feel like you.
-          </p>
-        </div>
-        <div className="missing-stamp">
-          MORE OUTFITS.
-          <br />
-          LESS GUESSWORK.<span>✳</span>
-        </div>
-      </div>
-      <div className="gap-tabs">
-        {results.map((g, i) => (
+    <section className="missing-simple">
+      <h1>A little more possibility.</h1>
+      <p className="missing-intro">
+        {results.length
+          ? "Tap a piece to see what it could add."
+          : "Nothing obvious missing. Keep exploring your style."}
+      </p>
+      <div className="missing-tags" aria-label="Pieces to explore">
+        {results.map((g) => (
           <button
             key={g.item.id}
-            className={active === i ? "active" : ""}
-            onClick={() => setActive(i)}
+            className={active === g.item.id ? "active" : ""}
+            aria-expanded={active === g.item.id}
+            aria-controls="missing-piece"
+            onClick={() => setActive(active === g.item.id ? null : g.item.id)}
           >
-            <span>0{i + 1}</span>
-            <div>
-              <b>{g.item.name}</b>
-              <small>{g.likely} likely new looks</small>
-            </div>
-            <ArrowUpRight size={17} />
+            {g.item.name}
+            <ChevronDown size={14} />
           </button>
         ))}
       </div>
-      <div className="gap-feature">
-        <div className="gap-illustration">
-          <span className="eyebrow">THE MISSING PIECE / 0{active + 1}</span>
-          <Garment item={gap.item} />
-          <span className="ghost-label">
-            NOT IN YOUR CLOSET · {gap.item.color.toUpperCase()}
-          </span>
-        </div>
-        <div className="gap-story">
-          <span className="eyebrow">
-            {profile.ratings
-              ? "YOUR PERSONALIZED WARDROBE GAP"
-              : "AN EARLY WARDROBE POSSIBILITY"}
-          </span>
-          <h2>{gap.item.name}</h2>
-          <div className="unlock-number">
-            +{gap.likely}
-            <span>
-              outfits you might
-              <br />
-              actually reach for
-            </span>
-          </div>
-          <p>{gap.why}</p>
-          <div className="works-with">
-            {[
-              ["top", "tops"],
-              ["bottom", "bottoms"],
-              ["shoes", "shoes"],
-            ].map(([key, label]) => (
-              <div key={key}>
-                <b>{gap.counts[key]}</b>
-                <span>{label} you own</span>
-              </div>
-            ))}
-          </div>
-          <small>
-            Estimated from {gap.possible} sampled valid combinations.{" "}
-            {profile.ratings
-              ? "Outfit quality threshold: " + pct(gap.threshold) + "/100."
-              : "Rate outfits to personalize these estimates."}{" "}
-            No prices, brands or shopping links.
-          </small>
-        </div>
-      </div>
-      <div className="section-heading">
-        <h2>A few doors it opens.</h2>
-        <span>THE DASHED PIECE IS THE ONLY NEW ONE.</span>
-      </div>
-      <div className="unlocked-grid">
-        {gap.examples.map((o, i) => (
-          <article key={o.id}>
-            <div className="outfit-card-top">
-              <span>POSSIBILITY 0{i + 1}</span>
-              <span>{pct(preferenceScore(o, profile))} taste score</span>
-            </div>
-            <FlatLay outfit={o} ghostId={gap.item.id} small />
-          </article>
-        ))}
-      </div>
-      <details className="debug">
-        <summary>Why this ranking?</summary>
-        <p>
-          We generate valid outfits that must include exactly this missing
-          candidate; every other item is owned. We count only outfits passing
-          the shared outfit-quality and taste thresholds. Recolored duplicates
-          count once; value combines quality, predicted preference and
-          diversity. Counts are bounded sample estimates, not exhaustive
-          combinations.
+      {added && (
+        <p className="missing-added" role="status">
+          <Check size={16} />
+          {added}
         </p>
-        <div className="ranking-table">
-          {results.map((g) => (
-            <div key={g.item.id}>
-              <b>{g.item.name}</b>
-              <span>{g.possible} sampled</span>
-              <span>{g.likely} likely</span>
-              <span>{g.weighted.toFixed(1)} weighted score</span>
-            </div>
-          ))}
-        </div>
-      </details>
+      )}
+      {gap && (
+        <Piece
+          key={gap.item.id}
+          gap={gap}
+          onAdd={(id) => {
+            onAdd(id);
+            setAdded(
+              `${BY_ID[id].color[0].toUpperCase() + BY_ID[id].color.slice(1)} ${BY_ID[id].name.toLowerCase()} added to your closet.`,
+            );
+            setActive(null);
+          }}
+        />
+      )}
     </section>
   );
 }

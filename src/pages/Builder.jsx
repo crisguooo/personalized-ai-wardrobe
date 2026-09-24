@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import {
   ArrowUpRight,
   Check,
@@ -8,6 +8,7 @@ import {
   Shuffle,
   Bookmark,
   Plus,
+  X,
 } from "lucide-react";
 import { BY_ID } from "../data/catalog.js";
 import {
@@ -15,6 +16,7 @@ import {
   validity,
   swapCandidates,
   preferenceScore,
+  learn,
 } from "../engine/wardrobe.js";
 import { event, appendEvents } from "../services/analytics.js";
 import Garment from "../components/Garment.jsx";
@@ -26,15 +28,16 @@ import {
   today,
   validRange,
   rankForWeather,
+  weatherCandidates,
   weatherReason,
   temperature,
 } from "../engine/weather.js";
 const pct = (n) => Math.round(n * 100);
+import "../outfit-deck.css";
 export default function Builder({
   state,
   setState,
   profile,
-  candidates,
   track,
   notify,
   onLearn,
@@ -43,27 +46,103 @@ export default function Builder({
   const hasWeather =
     state.weather?.date === today() &&
     validRange(state.weather.lowC, state.weather.highC);
-  const order = (items, occasion = "Everyday", options = {}) =>
+  const order = (
+    items,
+    occasion = "Everyday",
+    options = {},
+    rankingProfile = profile,
+  ) =>
     hasWeather
       ? rankForWeather(
           items,
-          profile,
+          rankingProfile,
           state.weather,
           state.thermalOverrides,
           occasion,
           options,
         )
-      : rank(items, profile, occasion, options);
+      : rank(items, rankingProfile, occasion, options);
   const [occasion, setOccasion] = useState(
-      () => state.generated.at(-1)?.occasion ?? "Everyday",
-    ),
-    [current, setCurrent] = useState(
+    () => state.generated.at(-1)?.occasion ?? "Everyday",
+  );
+  const candidates = useMemo(
+    () =>
+      weatherCandidates(
+        state.closet,
+        profile,
+        hasWeather ? state.weather : undefined,
+        state.thermalOverrides,
+        occasion,
+      ),
+    [state.closet, profile, state.weather, state.thermalOverrides, occasion],
+  );
+  const [current, setCurrent] = useState(
       () =>
         order(candidates, state.generated.at(-1)?.occasion ?? "Everyday")[0],
     ),
     [selected, setSelected] = useState(null),
     [tab, setTab] = useState("studio"),
     [activeRefinement, setActiveRefinement] = useState(null);
+  const [reviewed, setReviewed] = useState([]),
+    [deckDone, setDeckDone] = useState(false),
+    [drag, setDrag] = useState(0);
+  const ratingLock = useRef(false),
+    pointer = useRef(null),
+    suppressClick = useRef(false);
+  useEffect(() => {
+    ratingLock.current = false;
+    setDrag(0);
+  }, [current?.id]);
+  function rateLook(rating) {
+    if (!current || ratingLock.current || deckDone) return;
+    ratingLock.current = true;
+    const feedback = {
+      id: crypto.randomUUID(),
+      outfitId: current.id,
+      itemIds: current.itemIds,
+      aestheticDirection: current.aestheticDirection,
+      colorStrategy: current.colorStrategy,
+      heroItemId: current.heroItemId,
+      outfitArchetype: current.outfitArchetype,
+      rating,
+      reason: null,
+      timestamp: new Date().toISOString(),
+      phase: "personalized",
+      occasion,
+    };
+    const nextProfile = learn([...state.feedback, feedback]);
+    setState((s) =>
+      appendEvents(
+        {
+          ...s,
+          feedback: [...s.feedback, feedback],
+          profile: learn([...s.feedback, feedback]),
+        },
+        event(rating === "like" ? "outfit_liked" : "outfit_disliked", {
+          outfitId: current.id,
+          source: "studio",
+          occasion,
+        }),
+      ),
+    );
+    const seen = [...reviewed, current.id];
+    setReviewed(seen);
+    const next = order(
+      candidates.filter((o) => !seen.includes(o.id)),
+      occasion,
+      {
+        refinement: activeRefinement,
+        recent: [...state.feedback.slice(-3), feedback],
+      },
+      nextProfile,
+    )[0];
+    setDrag(0);
+    if (next) apply(next);
+    else {
+      setDeckDone(true);
+      notify("You've seen these looks. Try a new plan or a refinement.");
+    }
+  }
   const available = state.closet.map((id) => BY_ID[id]);
   useEffect(() => {
     if (
@@ -91,11 +170,12 @@ export default function Builder({
         .length
     ) {
       notify(
-        "This temperature needs a warm long-sleeve base and one outer shell. Try another piece.",
+        "That piece doesn’t suit today’s temperature. Try a seasonal alternative.",
       );
       return;
     }
     setCurrent(outfit);
+    setDeckDone(false);
     setSelected(null);
     setState((s) =>
       appendEvents(
@@ -106,6 +186,10 @@ export default function Builder({
             {
               id: outfit.id,
               itemIds: outfit.itemIds,
+              aestheticDirection: outfit.aestheticDirection,
+              colorStrategy: outfit.colorStrategy,
+              heroItemId: outfit.heroItemId,
+              outfitArchetype: outfit.outfitArchetype,
               occasion: nextOccasion,
               createdAt: new Date().toISOString(),
             },
@@ -116,6 +200,8 @@ export default function Builder({
     );
   }
   function styleMe() {
+    ratingLock.current = false;
+    setReviewed([]);
     setActiveRefinement(null);
     const recent = new Set(state.generated.slice(-8).map((o) => o.id));
     const list = order(
@@ -153,23 +239,32 @@ export default function Builder({
         "This closet has no matching refinement yet. Try adding a layer or another silhouette.",
       );
   }
+  const isSaved = state.saved.some((o) => o.id === current?.id);
   function save() {
     if (state.saved.some((o) => o.id === current.id)) {
       notify("This look is already saved.");
       return;
     }
-    setState((s) => ({
-      ...s,
-      saved: [
-        ...s.saved,
-        {
-          id: current.id,
-          itemIds: current.itemIds,
-          occasion,
-          createdAt: new Date().toISOString(),
-        },
-      ],
-    }));
+    setState((s) =>
+      s.saved.some((o) => o.id === current.id)
+        ? s
+        : {
+            ...s,
+            saved: [
+              ...s.saved,
+              {
+                id: current.id,
+                itemIds: current.itemIds,
+                aestheticDirection: current.aestheticDirection,
+                colorStrategy: current.colorStrategy,
+                heroItemId: current.heroItemId,
+                outfitArchetype: current.outfitArchetype,
+                occasion,
+                createdAt: new Date().toISOString(),
+              },
+            ],
+          },
+    );
     notify("Saved to your outfit collection.");
   }
   return (
@@ -232,7 +327,7 @@ export default function Builder({
                     ).length
                   ) {
                     notify(
-                      "This saved look needs a warmer base for today. Choose a new look.",
+                      "This saved look doesn’t suit today’s temperature. Choose a new look.",
                     );
                     return;
                   }
@@ -257,8 +352,8 @@ export default function Builder({
       ) : !current ? (
         <div className="inline-empty">
           <p>
-            Add a warm long-sleeve base and the missing weather pieces to build
-            a suitable outfit.
+            Start with a base and shoes that suit today’s temperature. Review
+            today’s suggestions to build a comfortable look.
           </p>
           <button className="primary" onClick={onWeather}>
             Review today’s needs
@@ -280,9 +375,20 @@ export default function Builder({
                   key={o}
                   onClick={() => {
                     setOccasion(o);
+                    setReviewed([]);
+                    ratingLock.current = false;
                     setActiveRefinement(null);
                     apply(
-                      order(candidates, o)[0],
+                      order(
+                        weatherCandidates(
+                          state.closet,
+                          profile,
+                          hasWeather ? state.weather : undefined,
+                          state.thermalOverrides,
+                          o,
+                        ),
+                        o,
+                      )[0],
                       "occasion_outfit_generated",
                       o,
                     );
@@ -343,79 +449,183 @@ export default function Builder({
               </div>
             </div>
           </aside>
-          <div className="studio-canvas">
-            <div className="outfit-card-top">
-              <span>{occasion.toUpperCase()} / YOUR EDIT</span>
-              <button onClick={save} className="save-button">
-                <Bookmark size={16} />
-                Save look
-              </button>
-            </div>
-            <FlatLay
-              outfit={current}
-              selected={selected}
-              onSelect={setSelected}
-            />
-            <PaletteNote outfit={current} />
-            <ScoreDebug
-              outfit={current}
-              profile={profile}
-              occasion={occasion}
-              refinement={activeRefinement}
-            />
-            {hasWeather && (
-              <div className="weather-reason">
-                <span className="eyebrow">WHY THESE PIECES</span>
-                <p>
-                  {weatherReason(
-                    current,
-                    state.weather,
-                    state.thermalOverrides,
+          <div className="builder-deck-column">
+            <div className="studio-canvas outfit-deck">
+              <div className="outfit-card-top">
+                <span>{occasion.toUpperCase()} / YOUR EDIT</span>
+                <button
+                  onClick={save}
+                  className="save-button"
+                  aria-pressed={isSaved}
+                >
+                  <Bookmark
+                    size={16}
+                    fill={isSaved ? "currentColor" : "none"}
+                  />
+                  {isSaved ? "Saved" : "Save look"}
+                </button>
+              </div>
+              {deckDone ? (
+                <div className="deck-complete">
+                  <h2>A little more understood.</h2>
+                  <p>
+                    You've rated these looks. Try another plan or make a small
+                    shift below.
+                  </p>
+                  <button
+                    className="outline"
+                    onClick={() => {
+                      setReviewed([]);
+                      setDeckDone(false);
+                      ratingLock.current = false;
+                      styleMe();
+                    }}
+                  >
+                    Browse again
+                  </button>
+                </div>
+              ) : (
+                <div
+                  key={current.id}
+                  className="deck-card"
+                  style={{
+                    transform: `translateX(${drag}px) rotate(${drag / 35}deg)`,
+                  }}
+                  onClickCapture={(e) => {
+                    if (suppressClick.current) {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      suppressClick.current = false;
+                    }
+                  }}
+                  onPointerDown={(e) => {
+                    if (e.button === 0) {
+                      pointer.current = { x: e.clientX, y: e.clientY };
+                      suppressClick.current = false;
+                    }
+                  }}
+                  onPointerMove={(e) => {
+                    if (!pointer.current) return;
+                    const dx = e.clientX - pointer.current.x,
+                      dy = e.clientY - pointer.current.y;
+                    if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 8) {
+                      e.currentTarget.setPointerCapture(e.pointerId);
+                      setDrag(Math.max(-130, Math.min(130, dx)));
+                    }
+                  }}
+                  onPointerUp={(e) => {
+                    if (!pointer.current) return;
+                    const dx = e.clientX - pointer.current.x,
+                      dy = e.clientY - pointer.current.y;
+                    pointer.current = null;
+                    if (Math.abs(dx) > 70 && Math.abs(dx) > Math.abs(dy)) {
+                      suppressClick.current = true;
+                      rateLook(dx < 0 ? "like" : "dislike");
+                    }
+                    setDrag(0);
+                  }}
+                  onPointerCancel={() => {
+                    pointer.current = null;
+                    setDrag(0);
+                  }}
+                >
+                  <FlatLay
+                    outfit={current}
+                    selected={selected}
+                    onSelect={setSelected}
+                  />
+                  {Math.abs(drag) > 35 && (
+                    <span className="deck-drag-label">
+                      {drag < 0 ? "Like" : "Not for me"}
+                    </span>
                   )}
+                </div>
+              )}
+              <div className="deck-votes">
+                <button
+                  className="deck-like"
+                  disabled={deckDone}
+                  onClick={() => rateLook("like")}
+                  aria-label="Like this outfit"
+                >
+                  <Heart size={21} />
+                  <span>Like</span>
+                </button>
+                <span>Would you wear this?</span>
+                <button
+                  disabled={deckDone}
+                  onClick={() => rateLook("dislike")}
+                  aria-label="Dislike this outfit"
+                >
+                  <X size={21} />
+                  <span>Not for me</span>
+                </button>
+              </div>
+              <PaletteNote outfit={current} />
+              <ScoreDebug
+                outfit={current}
+                profile={profile}
+                occasion={occasion}
+                refinement={activeRefinement}
+              />
+              {hasWeather && (
+                <div className="weather-reason">
+                  <span className="eyebrow">WHY THESE PIECES</span>
+                  <p>
+                    {weatherReason(
+                      current,
+                      state.weather,
+                      state.thermalOverrides,
+                    )}
+                  </p>
+                </div>
+              )}
+              <div className="canvas-bottom">
+                <span>
+                  {selected
+                    ? `${BY_ID[selected].color} ${BY_ID[selected].name}`
+                    : "Tap a piece to make a small change."}
+                </span>
+                <button
+                  className="outline"
+                  disabled={!selected}
+                  onClick={doSwap}
+                >
+                  <Shuffle size={15} />
+                  Swap this
+                </button>
+              </div>
+            </div>
+            <aside className="refinement-panel">
+              <span className="eyebrow">THE FINISHING TOUCH</span>
+              <h3>
+                Almost you?
+                <br />
+                <em>Make a little shift.</em>
+              </h3>
+              <p>A change of mood, without starting from scratch.</p>
+              {["Less basic", "More casual", "More dressy", "More layered"].map(
+                (r) => (
+                  <button key={r} onClick={() => refine(r)}>
+                    {r}
+                    <Plus size={15} />
+                  </button>
+                ),
+              )}
+              <div className="taste-score">
+                <span>
+                  {pct(preferenceScore(current, profile))}
+                  <small>/100</small>
+                </span>
+                <p>
+                  {profile.ratings
+                    ? "Your current taste score"
+                    : "A neutral starting score"}
                 </p>
               </div>
-            )}
-            <div className="canvas-bottom">
-              <span>
-                {selected
-                  ? `${BY_ID[selected].color} ${BY_ID[selected].name}`
-                  : "Tap a piece to make a small change."}
-              </span>
-              <button className="outline" disabled={!selected} onClick={doSwap}>
-                <Shuffle size={15} />
-                Swap this
-              </button>
-            </div>
+              <small>Based on observed preferences, not a probability.</small>
+            </aside>
           </div>
-          <aside className="refinement-panel">
-            <span className="eyebrow">THE FINISHING TOUCH</span>
-            <h3>
-              Almost you?
-              <br />
-              <em>Make a little shift.</em>
-            </h3>
-            <p>A change of mood, without starting from scratch.</p>
-            {["Less basic", "More casual", "More dressy", "More layered"].map(
-              (r) => (
-                <button key={r} onClick={() => refine(r)}>
-                  {r}
-                  <Plus size={15} />
-                </button>
-              ),
-            )}
-            <div className="taste-score">
-              <span>
-                {pct(preferenceScore(current, profile))}
-                <small>/100</small>
-              </span>
-              <p>
-                {profile.ratings
-                  ? "Your current taste score"
-                  : "A neutral starting score"}
-              </p>
-            </div>
-            <small>Based on observed preferences, not a probability.</small>
-          </aside>
         </div>
       )}
     </section>

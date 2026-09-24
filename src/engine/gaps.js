@@ -41,7 +41,7 @@ export function gapEvidence(candidates, profile, threshold = 0.7) {
 }
 export function gaps(ownedIds, profile = learn([])) {
   const ownedArchetypes = new Set(ownedIds.map((id) => BY_ID[id]?.archetype));
-  const baseline = rank(generate(ownedIds), profile, "Everyday", {
+  const baseline = rank(generate(ownedIds, { profile }), profile, "Everyday", {
     diversity: false,
   });
   if (!baseline.length) return [];
@@ -64,6 +64,7 @@ export function gaps(ownedIds, profile = learn([])) {
       const candidates = generate([...ownedIds, item.id], {
         requiredId: item.id,
         limit: 300,
+        profile,
       });
       const facts = gapEvidence(candidates, profile, threshold);
       const compatible = new Set(
@@ -93,6 +94,9 @@ export function gaps(ownedIds, profile = learn([])) {
         counts,
         compatible: compatible.size,
         examples,
+        shortReason: relevant.length
+          ? `Brings ${relevant.join(" and ")} to more of the pieces you own.`
+          : `Works with ${compatible.size} pieces already in your closet.`,
         why: `${relevant.length ? `Repeated ratings favor ${relevant.join(" and ")}. ` : "This is an early estimate from your closet. "}Adding ${item.name.toLowerCase()} opens ${facts.likely} distinct high-scoring combinations with ${compatible.size} pieces you own; the previews show actual examples.`,
       };
     },

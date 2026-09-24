@@ -1,0 +1,66 @@
+{
+  "carhartt": {
+    "image": "/assets/brands/carhartt.svg",
+    "source": "https://us.carhartt-wip.com/en-us/brands"
+  },
+  "ganni": {
+    "image": "/assets/brands/ganni.svg",
+    "source": "https://www.ganni.com/en/ganni-world.html"
+  },
+  "stussy": {
+    "image": "/assets/brands/stussy.svg",
+    "source": "https://www.stussy.com/blogs/features/book-about-t-shirts"
+  },
+  "apc": {
+    "image": "/assets/brands/apc.svg",
+    "source": "https://www.apc-us.com/pages/the-brand"
+  },
+  "reformation": {
+    "image": "/assets/brands/reformation.svg",
+    "source": "https://www.thereformation.com/timeline.html"
+  },
+  "toteme": {
+    "image": "/assets/brands/toteme.png",
+    "source": "https://toteme.com/cdn/shop/files/WORDMARK.png?v=1723457381&width=1000"
+  },
+  "cos": {
+    "image": "/assets/brands/cos.svg",
+    "source": "https://www.cos.com/static_assets/iconSpriteNew.svg"
+  },
+  "patagonia": {
+    "image": "/assets/brands/patagonia.png",
+    "source": "https://www.patagonia.com/media/SPA-sitefailover/sitedownpage/images/patagonia-logo.png"
+  },
+  "the-row": {
+    "image": "/assets/brands/the-row.png",
+    "source": "https://cdn.shopify.com/s/files/1/0552/0313/5593/files/logo_therow_e6543ef8-863b-462b-a9f9-e076ceff0052.png?height=628&pad_color=ffffff&v=1677024616&width=1200"
+  },
+  "acne": {
+    "image": "/assets/brands/acne.svg",
+    "source": "https://www.acnestudios.com/on/demandware.static/Sites-acne_my-Site/-/default/dw70ff07c2/icons/acne_studios_logo.svg"
+  },
+  "arcteryx": {
+    "image": "/assets/brands/arcteryx.svg",
+    "source": "https://arcteryx.com.au/cdn/shop/files/Arcteryx_logo_0746bbe2-e600-40b9-b047-7ab46884f9d0.svg?v=1739431978"
+  },
+  "arket": {
+    "image": "/assets/brands/arket.svg",
+    "source": "https://www.arket.com/static_assets/iconSprite.svg"
+  },
+  "theory": {
+    "image": "/assets/brands/theory.svg",
+    "source": "https://upload.wikimedia.org/wikipedia/commons/c/c8/Theory_(Clothing)_Logo.svg"
+  },
+  "uniqlo": {
+    "image": "/assets/brands/uniqlo.svg",
+    "source": "https://upload.wikimedia.org/wikipedia/commons/9/92/UNIQLO_logo.svg"
+  },
+  "polo": {
+    "image": "/assets/brands/polo.png",
+    "source": "https://corporate.ralphlauren.com/on/demandware.static/-/Sites-RalphLauren_Corporate-Library/default/dw1a9a1ccd/assets/images/MEDIA_ASSETS/Polo_Ralph_Lauren_navy_on_white_logo_sm.png"
+  },
+  "sezane": {
+    "image": "/assets/brands/sezane.png",
+    "source": "https://cdn.prod.website-files.com/654a30d6a2e16fc3c2a41c5a/656744684957e03ff8ba08ae_6565e2c402b773cabf331e92_Sezane_website_logo%2520-%2520Mockup%25201%2520-%2520Mockup%25202%25232804529.png"
+  }
+}

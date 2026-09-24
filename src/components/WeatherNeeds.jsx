@@ -10,6 +10,9 @@ import {
 export default function WeatherNeeds({ closet, weather, overrides, onCloset }) {
   if (!validRange(weather?.lowC, weather?.highC)) return null;
   const { missing } = weatherNeeds(closet, weather, overrides);
+  const needsLighter =
+    missing.some((r) => r.seasonal) &&
+    weather.lowC - comfortOffset(weather) >= 22;
   const band = weatherBand(weather.lowC - comfortOffset(weather));
   return (
     <div className="weather-needs">
@@ -19,8 +22,14 @@ export default function WeatherNeeds({ closet, weather, overrides, onCloset }) {
       <p>{band[1]}.</p>
       {missing.length > 0 && (
         <div className="missing-weather-pieces" role="status">
-          <h3>Missing from your closet</h3>
-          <p>Add these to cover the colder part of today.</p>
+          <h3>
+            {needsLighter ? "A lighter option would help" : "You may feel cold"}
+          </h3>
+          <p>
+            {needsLighter
+              ? "Try these pieces for a more comfortable warm-weather look."
+              : "These pieces would help keep you warmer at today’s low."}
+          </p>
           <ul>
             {missing.map((r) => (
               <li key={r.key}>

@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Check } from "lucide-react";
 import { BY_ID, STARTER_IDS } from "./data/catalog.js";
 import { learn, validity } from "./engine/wardrobe.js";
-import { weatherCandidates } from "./engine/weather.js";
+import { weatherCandidates, today } from "./engine/weather.js";
 import { createStorage, freshState } from "./services/storage.js";
 import { event, appendEvents } from "./services/analytics.js";
 import { ColorFilters } from "./components/Garment.jsx";
@@ -61,10 +61,18 @@ export default function App() {
     setState((s) => appendEvents(s, event(name, properties)));
   const owned = state.closet.map((id) => BY_ID[id]);
   const candidates = useMemo(
-    () => weatherCandidates(state.closet),
-    [state.closet],
+    () =>
+      weatherCandidates(
+        state.closet,
+        profile,
+        state.weather?.date === today() ? state.weather : undefined,
+        state.thermalOverrides,
+      ),
+    [state.closet, profile, state.weather, state.thermalOverrides],
   );
-  const ready = candidates.length > 0;
+  const ready = ["top", "bottom", "shoes"].every((category) =>
+    owned.some((i) => i.category === category),
+  );
   const start = () => {
     if (!ready) return;
     setState((s) =>
@@ -246,7 +254,20 @@ export default function App() {
         )}
         {page === "missing" &&
           (ready ? (
-            <Missing {...{ state, profile, track }} />
+            <Missing
+              {...{ state, profile, track }}
+              onAdd={(id) => {
+                if (!BY_ID[id]) return;
+                setState((s) =>
+                  s.closet.includes(id)
+                    ? s
+                    : appendEvents(
+                        { ...s, closet: [...s.closet, id] },
+                        event("closet_item_added", { id, source: "missing" }),
+                      ),
+                );
+              }}
+            />
           ) : (
             <Empty
               title="First, the pieces you already love."

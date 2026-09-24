@@ -15,6 +15,7 @@ import {
   weatherNeeds,
 } from "../src/engine/weather.js";
 import { weatherBand } from "../src/data/thermal.js";
+import { finishingTouch } from "../src/engine/finishing-touch.js";
 import { freshState, sanitize } from "../src/services/storage.js";
 import {
   SETUP_GROUPS,
@@ -44,9 +45,60 @@ const ids = [
   "gloves:black",
 ];
 const weather = { ...freshWeather(), lowC: 9, highC: 17 };
-const candidates = weatherCandidates(ids);
+const candidates = weatherCandidates(ids, learn([]), weather);
 const ranked = (w = weather, overrides = {}) =>
-  rankForWeather(candidates, learn([]), w, overrides);
+  rankForWeather(
+    weatherCandidates(ids, learn([]), w, overrides),
+    learn([]),
+    w,
+    overrides,
+  );
+
+test("winter gaps explain feeling cold, including protective accessories", () => {
+  const cold = { ...weather, lowC: -4, highC: 3 };
+  const look = {
+    itemIds: [
+      "knit:beige",
+      "fleece-pants:black",
+      "sneakers:white",
+      "long-puffer:black",
+      "scarf:grey",
+    ],
+  };
+  const reason = weatherReason(look, cold);
+  assert.match(reason, /You may feel cold at -4°C/);
+  assert.match(reason, /insulated winter boots/);
+  assert.match(reason, /beanie/);
+  assert.match(reason, /gloves/);
+  assert.doesNotMatch(reason, /incomplete|finishing touch/);
+  assert.match(
+    weatherReason(
+      {
+        ...look,
+        itemIds: look.itemIds.filter((id) => id !== "long-puffer:black"),
+      },
+      { ...cold, unit: "F" },
+    ),
+    /25°F.*insulated winter coat/,
+  );
+  assert.equal(
+    finishingTouch(look, [...look.itemIds, "shoulder-bag:black"], cold),
+    "",
+  );
+});
+
+test("optional polish omits an owned accessory that adds no visual value", () => {
+  const warm = { ...weather, lowC: 28, highC: 30 };
+  const look = {
+    itemIds: ["crew-tee:white", "denim-shorts:black", "sandals:black"],
+  };
+  const closet = [...look.itemIds, "shoulder-bag:black"];
+  const suggestion = finishingTouch(look, closet, warm);
+  assert.equal(suggestion, "");
+  assert.doesNotMatch(suggestion, /cold|need|missing|incomplete/);
+  assert.equal(finishingTouch(look, look.itemIds, warm), "");
+  assert.equal(finishingTouch({ itemIds: closet }, closet, warm), "");
+});
 
 test("seasonal pieces are offered first without blocking essential setup", () => {
   const draft = freshOnboarding();
@@ -243,7 +295,7 @@ test("full winter gear is composed together and passes coverage rules below free
     "gloves:black",
   ];
   assert.equal(weatherNeeds(full, cold).missing.length, 0);
-  const options = weatherCandidates(full);
+  const options = weatherCandidates(full, learn([]), cold);
   const best = rankForWeather(options, learn([]), cold)[0];
   assert.equal(best.weatherFit.missing.length, 0);
   assert(

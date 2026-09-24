@@ -1,52 +1,122 @@
 # Wearwell
 
-**Your wardrobe learns your taste.**
+**Less guesswork. More you.**
 
-Wearwell is a consumer wardrobe prototype with focused, app-like onboarding on mobile and desktop: select familiar silhouettes and their colors, rate outfits, discover what those decisions have in common, and make better combinations from clothes you already own. Its second core feature identifies missing archetypes by the **preference-weighted new outfits** they can unlock.
+Wearwell helps people decide what to wear from the clothes they already own. It combines a representative digital closet, personal style feedback and daily temperatures to recommend complete looks—and explains why those pieces work together.
 
-This project lives in a private GitHub repository. It is an independent implementation, not a fork of Cher's Closet.
+A consumer product prototype built with React, Vite and an explainable, local recommendation engine. No account, paid AI key or garment-photo upload is required for the demo.
 
 ## The problem
 
-A closet inventory does not tell you why some combinations feel like you and others do not. Wearwell focuses on that gap: learning from decisions about complete outfits, without requiring photos of every garment, a long style questionnaire, shopping links, or a fashion chatbot.
+Having a full wardrobe does not make getting dressed easy. People still need to answer three questions:
 
-## A three-minute demo
+- **What works together?** Individually compatible garments can form an awkward outfit.
+- **What feels like me?** Generic recommendations ignore taste, silhouette and comfort preferences.
+- **What is actually worth adding?** A shopping catalog cannot show whether a new piece meaningfully improves an existing wardrobe.
 
-1. Start with **Build my closet**. Optional seasonal favorites come first: knit, trench, knee-high boots, puffer, wool coat and scarf. Then choose everyday silhouettes and their colors; each silhouette/color combination becomes a separate piece.
-2. With eight pieces covering tops, bottoms and shoes, choose **Start with these →**. Optional sections remain skippable; smaller closets can also finish once the essentials are covered. Choose **Dress for today**, enter the low/high in Celsius or Fahrenheit, and select a comfort preference. Your weather outfit includes a short explanation of what to wear at the low and remove at the high. **Teach Wearwell my style** then opens Swipe & Learn.
-3. Rate five deliberately varied outfits with **Love this** or **Not for me**. Dislike reasons are optional.
-4. Read **We learned something about you**. These insights are computed from those exact ratings, including an honest empty state when a signal is missing.
-5. Continue to a batch ranked by the learned profile. Rate another outfit to populate the before/after acceptance comparison.
-6. Open **Outfits**, choose **Going out**, and click **Style me**. Select a garment and **Swap this**; other pieces stay in place. Save the look.
-7. Open **My style** to inspect preference dimensions and the underlying evidence.
-8. Open **Missing** to compare three gaps and preview up to three unlocked outfits. Only the dashed garment is hypothetical.
-9. Refresh: closet, feedback, learned profile, saved/generated outfits and onboarding survive.
+Digitizing every garment before seeing value adds another barrier. Wearwell starts with familiar silhouettes and colors, then learns through small decisions about complete outfits.
 
-**My style → Start a fresh demo** resets this browser's data after confirmation. Clothing, feedback and preferences are never pre-seeded.
+## The product approach
 
-First-time setup hides product navigation and uses one question per screen with Back and a fixed bottom action. Selections and the current step survive refresh. If weather reveals missing pieces, **Update my clothes** opens the simple two-list editor directly, keeping product navigation hidden until completion. Returning users can manage the same lists in Closet.
+| User need | Wearwell's response |
+| --- | --- |
+| Get started without cataloging everything | Progressive setup; eight pieces across tops, bottoms and shoes unlock an early start. Seasonal extras are optional. |
+| Keep the wardrobe accurate | Categorized **All clothes** and **My clothes** lists; each silhouette/color pair is a separate owned item. |
+| Decide what to wear today | Enter the daily low/high in °C or °F, adjust cold tolerance, and get a look with a short practical explanation. |
+| Make recommendations feel personal | Like/dislike complete looks, optionally explain dislikes, and refine future rankings. |
+| Dress for a specific plan | Occasion-based outfit cards, single-item swaps, save controls and lightweight refinements. |
+| Understand a developing taste | Evidence-backed style tags and editorial brand references with filters. |
+| Identify a useful wardrobe addition | **Missing** ranks sampled new outfit opportunities; an already-owned piece can be added with its color. |
 
-## Screens and visual system
+The visual identity uses a cream background, editorial typography, red accents and photographic-style garment cutouts. Navigation stays out of first-time setup so each step has one clear task.
 
-The interface uses cream paper, tomato-red controls, editorial serif typography and original clothing illustrations. Desktop and 390px mobile layouts were manually checked.
+## Business impact
 
-| Screen        | Preview / screenshot placeholder                                          |
-| ------------- | ------------------------------------------------------------------------- |
-| First-time setup | Welcome, silhouette choices, individual colors, optional extras, closet payoff |
-| Today         | Low/high input, personal cold tolerance, weather outfit and editable piece guides |
-| Closet        | “Tell us what you own.” All clothes on the left, owned pieces on the right; choose color, add or remove |
-| Swipe & Learn | Flat-lay card, optional reasons, fifth-rating insight transition          |
-| Outfit studio | Occasion picker, owned-clothing rail, single-item swap, saved looks       |
-| Style DNA     | Evidence-based dimensions, interpretable insights, acceptance comparison  |
-| Missing       | Three ranked gaps, estimated counts and dashed hypothetical garments      |
+**The business thesis is to turn wardrobe ownership into a recurring decision-making service.** A useful daily recommendation can create repeat use; saved looks and feedback can make the service more valuable over time; wardrobe gaps can support considered purchases instead of indiscriminate shopping.
 
-These are explicit screenshot placeholders; the live application is the interactive preview. Original asset preview:
+These are product hypotheses, not measured commercial results. No production cohort study, revenue experiment or validated retention lift has been run.
 
-![Original 36-archetype clothing atlas](public/assets/wardrobe-atlas.png)
+| Intended outcome | Mechanism already implemented | How to validate it |
+| --- | --- | --- |
+| Lower activation friction | Representative closet, skippable groups, early start | Setup completion rate and median time to first useful look |
+| Reduce daily decision effort | Weather-aware looks, concise reasons and controlled swaps | Time to a chosen/saved look, plus wearer-reported confidence |
+| Increase return usage | Daily context and a preference profile that evolves with feedback | D7/D30 retention and useful recommendation days per active user |
+| Improve personalization | Reason-aware learning and whole-look reranking | Acceptance/save rate versus a non-personalized baseline, controlling for occasion and closet size |
+| Increase use of existing clothes | Owned-only recommendations and silhouette diversity | Share of owned garments appearing in accepted looks; confirm actual wear separately |
+| Make gap discovery more useful | Quality- and preference-weighted new combinations | Gap exploration, corrected ownership and user-rated usefulness of previews |
+| Keep prototype operating costs low | Client-side inference and local persistence | Hosting usage and cost per active demo user; no paid model calls in the hosted demo |
 
-## Local setup
+An eventual business could test a paid planning service or clearly disclosed commerce referrals. Neither monetization nor checkout is implemented. The current deployment is a personal, non-commercial portfolio demo.
 
-Requires **Node.js 22.16+** (verified with Node 24) and npm.
+Local event records support prototype inspection; there is no connected analytics pipeline. Likes, saves and generated counts are proxies, not evidence that someone wore an outfit or bought an item.
+
+## How the recommendation engine works
+
+The central engineering decision is to **design an intentional look before adapting it to the weather**.
+
+```text
+Occasion + learned style
+  → one aesthetic direction
+  → silhouette formula + layering structure
+  → hero piece + color strategy
+  → supporting garments and shoes
+  → complete-look aesthetic evaluation
+  → weather validation / adjustment
+  → personal reranking + diversity
+```
+
+### 1. A direction and formula guide generation
+
+Each outfit expresses a primary direction: minimal clean, relaxed street, sporty casual, soft feminine, polished casual, edgy or preppy. Candidate pools are shaped by proven proportions such as fitted/cropped + wide bottoms, oversized + straight bottoms, or roomy outerwear + a fitted base.
+
+Formulas influence which candidates are built, not just how random combinations are scored. They are flexible priors; learned taste can change their ranking. Shoes are assessed against the complete silhouette and style language.
+
+### 2. Fewer pieces, with a reason for each
+
+The default is **top + bottom + shoes**. Optional pieces must improve the complete look. A leave-one-out comparison asks whether removing a piece makes the composition worse. Necessary weather protection is treated separately from decorative additions.
+
+Layer structures are chosen before garments: `base`, `base + mid`, `base + outer`, or `base + mid + outer`. Roles depend on structure, length, bulk, fit, intended use and capacity—not just the Closet category. A long or chunky cardigan occupies the outer slot; a thin cardigan can fit beneath a roomy coat. Two competing dominant outer layers are rejected.
+
+### 3. Color is a strategy, not a three-color rule
+
+Every garment has a semantic shade, hue/family, temperature, value, saturation and approximate visual area. Navy, dusty blue, denim blue and powder blue remain distinct.
+
+Generation supports eight strategies: monochromatic/tonal, warm tonal, cool tonal, neutral + accent, analogous, complementary, split complementary and high-contrast neutral. Scoring considers hue relationships, temperature, lightness, saturation, dominance, vertical placement and tonal depth. Visible area accounts for layering and partial occlusion.
+
+There is no blanket three-color limit or red/burgundy ban. An intentional four-color palette can outrank an incoherent two-color palette.
+
+### 4. Weather modifies the look
+
+Low/high temperatures, personal cold tolerance and editable per-piece guides determine coverage and insulation needs. Cold conditions require an appropriate base; a puffer cannot justify an exposed summer top. Winter boots default to below 5°C; a regular puffer defaults to −5–10°C. Removable layers handle warmer afternoons.
+
+If the closet cannot provide enough protection, the product names the missing need and explains that the wearer may feel cold. Optional accessories are described as styling improvements. These are adjustable product heuristics, not measured fabric ratings or a guarantee of thermal comfort.
+
+### 5. Feedback learns relationships
+
+Likes add evidence about outfit features. Explicit dislike reasons target relevant relationships; an unexplained dislike is a weak signal. Color learning captures temperature, saturation, contrast, complexity, tonal/contrast relationships and accent tolerance rather than concluding that one disliked blue outfit means “dislikes blue.”
+
+Signals are bounded and confidence-weighted. Insights need repeated evidence. This is online preference learning over interpretable features, not model training or fine-tuning.
+
+### 6. Missing measures incremental wardrobe value
+
+For a missing archetype, generate hypothetical outfits that include that piece while keeping every other garment owned. Keep high-quality, preference-compatible results, deduplicate recolored combinations, and account for variety.
+
+The displayed `+N` is a bounded sample of qualifying opportunities. It is not an exhaustive combination count, a purchase recommendation guarantee, or a forecast of actual wear.
+
+## Try the demo
+
+1. Build a small closet with tops, bottoms and shoes; add seasonal pieces you actually own.
+2. Enter today's low/high and your comfort preference in **Today**.
+3. Use **Teach Wearwell my style** and rate several looks.
+4. Open **Outfits**, choose a plan, compare cards, swap one item or save a look.
+5. View learned tags and brand references in **My style**.
+6. Explore **Missing** and inspect the hypothetical outfit previews.
+
+Data stays in the current browser. A different device, browser or deployment origin starts a separate closet. Clearing site data resets it.
+
+## Run locally
+
+Requires Node.js **22.16+** and npm. The Vercel demo uses Node 22 for builds.
 
 ```sh
 git clone https://github.com/crisguooo/personalized-ai-wardrobe.git
@@ -55,140 +125,62 @@ npm ci
 npm run dev
 ```
 
-The development command starts Vite and the optional summary API together. Open the localhost URL printed by Vite, normally `http://127.0.0.1:5173`. GitHub authentication is required to clone this private repository.
+The repository's access permissions apply when cloning. Open the localhost URL printed by Vite, normally `http://127.0.0.1:5173`.
 
 ```sh
-npm test              # deterministic engine/storage/provider tests
-npm run build         # production client build in dist/
-npm run preview       # static client preview
-npm run server        # optional API alone
+npm test              # engine, feedback, persistence and regression tests
+npm run build         # static production client → dist/
+npm run preview       # preview the production client
 npm run format:check  # source formatting
 ```
 
-`preview` serves the static client; configure a same-origin `/api` proxy to the Node service if testing live summaries outside Vite development. Core recommendations, insights and gaps work without any AI provider.
+`npm run dev` also starts an optional local summary API. The current product screens and hosted demo do not depend on that service. `.env.example` documents optional server-only Anthropic configuration for experimentation; no provider keys are needed or deployed for this demo. Never prefix a secret with `VITE_`.
 
-## Architecture
+## Deploy on Vercel Hobby
 
-```text
-src/data/catalog.js       Canonical metadata, 72 archetypes × 12 colors
-src/data/thermal.js       Editable starting temperature ranges and layer insulation
-src/components/          Shared garment renderer, flat-lay composition
-src/engine/wardrobe.js    Validity → candidates → features → preferences → ranking
-src/engine/onboarding.js  Essential-first setup groups, resumable draft, early entry
-src/engine/weather.js     Unit conversion, personal comfort, low/high outfit scoring
-src/services/storage.js  Versioned localStorage repository and validation
-src/services/analytics.js Local event abstraction, bounded to 500 entries
-src/services/ai.js       Same-origin summary request
-src/App.jsx              Shared state, persistence lifecycle and navigation
-src/pages/               Closet, guided feedback, studio, style and missing views
-server/provider.js       Provider-neutral summary boundary with no-key fallback
-server/index.js          Local HTTP API; provider secrets stay server-side
-tests/engine.test.js      Core non-visual tests
-tests/onboarding.test.js  Early entry, optional categories, draft persistence, migration
-tests/weather.test.js     Units, seasonal entry, layering, comfort and thermal persistence
-docs/REFERENCE_REVIEW.md  Upstream inspection, reuse decisions, original plan
-```
+Import this repository into an existing **Hobby** workspace. `vercel.json` declares:
 
-The application owns one shared state rather than separate storage-backed state per page. Hash navigation supports refresh and browser Back without server rewrite rules. The storage adapter is the migration boundary for a future backend. Feedback is the source of truth: a stored profile is recomputed and validated on load.
+- Framework: Vite
+- Install: `npm ci`
+- Build: `npm test && npm run build`
+- Output: `dist`
+- Environment variables: none required
 
-### Clothing metadata and visuals
+The deployment serves static assets. Recommendations, preference learning and persistence run in the browser; there are no deployed model calls, database services or application functions. Hash-based routes work without a catch-all rewrite. No custom domain or paid add-on is required.
 
-Every variant has a stable ID, archetype, category, subcategory, color, fit, neckline, length, style tags, layer, warmth, formality and asset key. There are no branded SKUs or copied personal wardrobe records.
+[Vercel Hobby](https://vercel.com/docs/plans/hobby) is for personal, non-commercial use and is subject to usage limits. This demo does not require Pro or a Pro trial. Commercial use would need a separate hosting decision.
 
-The original generated 6×6 atlas is addressed through `illustrationMap`. SVG color matrices tint its grayscale cells while retaining the white background for multiply compositing; they do not draw garments. This keeps variants cohesive and avoids 288 separate downloads. Replace the renderer/registry with individually illustrated transparent PNGs later without changing recommendation data. The generation prompt is in [docs/wardrobe-atlas-prompt.txt](docs/wardrobe-atlas-prompt.txt).
+## Architecture and verification
 
-Knee-high boots and the scarf use original local SVG illustrations alongside the 36-cell atlas, with the same color treatment.
+| Area | Main files |
+| --- | --- |
+| Canonical wardrobe: 72 archetypes × 14 colors | `src/data/catalog.js`, `styling.js`, `thermal.js`, `layers.js` |
+| Directions, formula-led generation, ranking and swaps | `src/engine/directions.js`, `formulas.js`, `recommendations.js` |
+| Complete-look scoring and palette evaluation | `src/engine/scoring.js`, `aesthetics.js`, `color-engine.js` |
+| Weather adaptation and missing protection | `src/engine/weather.js` |
+| Feature extraction and preference learning | `src/engine/features.js`, `profile.js` |
+| Incremental wardrobe opportunities | `src/engine/gaps.js` |
+| Browser persistence | `src/services/storage.js` |
+| Optional local prose provider | `server/` |
 
-### Outfit generation
+**103 automated tests** cover owned-only deterministic generation, physical roles, intentional styling, color strategies, seasonal constraints, preference changes, swaps, gap quality and storage. Regression fixtures include competing outer layers and visually incoherent multi-piece looks. Tests and production build run during Vercel deployment.
 
-See [the styling-engine audit and architecture](docs/STYLING_ENGINE.md) for the shared scoring pipeline, metadata defaults, configurable occasion objectives and migration behavior.
+In development, open `?debug=1#outfits` for score components, color strategy, visible-area shares and layer assignments. Diagnostics are excluded from production UI.
 
-Hard constraints require exactly one top, one bottom and one pair of shoes, with at most one midlayer and outer layer. Accessories use separate head, neck, hands, bag, waist, jewelry and eyes slots, so a beanie, scarf and gloves can be worn together. Only one outer shell is allowed: fleece jackets and padded vests cannot stack with another jacket or long coat. Knit cardigans can layer beneath coats. Unknown IDs, duplicates, unowned items and incompatible bulky bases are rejected. Personal taste is a soft signal, separate from validity.
+Further detail: [Styling architecture](docs/STYLING_ENGINE.md) · [Color and weather logic](docs/COLOR_AND_SEASONS.md) · [QA record](docs/QA.md).
 
-Closet keeps the two-list layout and adds six category buttons. The catalog includes cashmere knits, flannel shirts, ribbed tops, long cardigans, wool trousers, lined leggings, pleated skirts, cotton shorts, cropped jackets, short wool jackets, Chelsea boots and crossbody bags. Cream, camel, olive and burgundy join the original eight colors.
+## Tradeoffs and next steps
 
-Palette compatibility is a soft score: neutrals, tonal relationships, controlled contrast and accessory accents receive useful priors. Too many dominant/unrelated colors score lower unless repeated feedback supports expressive combinations. Valid alternatives are retained for personalization. Winter accessory variants are chosen against the outfit palette. Color preferences never bypass the winter base or physical layer-capacity constraints.
+- Archetype-level metadata keeps setup fast, but does not capture each real garment's fabric, exact measurements or pattern.
+- Styling scores are explainable heuristics, not stylist-certified judgments or calibrated probabilities.
+- Candidate search is bounded for responsiveness; small closets limit variety and no global optimum is guaranteed.
+- Local storage reduces backend cost and avoids uploading wardrobe data, but provides no account, cross-device sync or server backup.
+- Brand references are editorial comparisons, not affiliations, inventory sources or sponsored recommendations.
 
-Generation uses an indexed bounded sample of up to 900 candidates rather than enumerating the whole Cartesian product. Valid candidates receive silhouette, layering, color, comfort, visual-interest, occasion and personal scores. Five centralized objective profiles combine these scores, followed by quality-bounded diversity control. Selecting an occasion changes the actual recommendation immediately. Refinements temporarily adjust targets/weights; **Swap this** locks every other piece and ranks compatible replacements through the same engine. Opt-in development inspection is available at `?debug=1#outfits`.
-
-### Weather and personal comfort
-
-Today accepts a manually entered daily low and high in either unit; switching units converts existing inputs. Temperatures are stored canonically in Celsius with a local date. Opening Today on a new day asks for an updated forecast. No location permission or weather service is required.
-
-Each of the 864 variants inherits an editable base temperature guide, coverage value and insulation contribution. The default tee range is **27–30°C**. Approximately every 2°C lower, the decision ladder asks for longer bottoms, longer sleeves, a warmer base or an extra layer. Full-length bottoms and shoes contribute modest warmth reductions; coats contribute more. Personal edits to both ends of a piece's range affect the outfit estimate.
-
-Below an effective **12°C**, or an actual **8°C** regardless of running warm, a warm long-sleeve base is mandatory. A long-sleeve top with an insulating knit midlayer also qualifies; a short sleeve never does. Coats and edited tee temperature ranges cannot substitute for this requirement. Missing bases suppress unsuitable recommendations and produce a concrete add-piece checklist in Today and the studio. Below effective −10°C a thermal top is mandatory. Manual studio changes and opening saved looks use the same winter-base guard.
-
-Explicit coverage rules supplement the warmth estimate: below **8°C**, require a winter coat; below **5°C**, lined pants and boots; below **2°C**, a warm hat and gloves; below **0°C**, an insulated winter coat and winter boots. Scarves are required below 10°C. Personal comfort shifts the effective temperature. Cosmetic accessories cannot satisfy winter requirements, and editing a tee's range cannot turn it into a winter coat.
-
-Recommendations assess the low with the full outfit and the high with removable layers taken off or an outer layer opened for ventilation. Clothing requirements take priority over style preference. Only owned items appear in the outfit. A separate **Missing from your closet** checklist names required equipment and example archetypes; adding a piece updates that checklist immediately. The expandable temperature ladder explains the defaults. Scarves, beanies and gloves are evaluated together, and alternate Today looks stay near the best weather fit.
-
-Users may choose default guidance, feeling cold easily, running warm, or their own temperature at which they want a heavy coat. The custom threshold also discourages removing that coat while the temperature remains at or below it. Individual variant ranges can be edited in the outfit's expandable guides and survive refresh. Today's weather also informs Swipe & Learn and outfit studio ranking; saved looks remain user choices.
-
-The explanation describes the selected garments and suggested layer removal, rather than claiming live wind or rain data. If available pieces leave a substantial warmth mismatch, it says so. Ranges and insulation are product heuristics, not measured fabric performance or universal comfort standards; wind, rain, activity and actual garment construction are not modeled.
-
-### Preference learning
-
-No training or fine-tuning. Feature extraction describes silhouettes, color palettes, style tags, layering, formality and combinations such as fitted-top/loose-bottom and matching sweats.
-
-- Likes add positive weighted evidence for present features.
-- Explicit dislike reasons update only the relevant dimensions.
-- Unexplained dislikes weakly update only the top–bottom archetype pairing. Reason-specific dislikes do not also penalize that pairing.
-- Evidence is shrunk toward neutral with a prior; weights are bounded to `[-1, 1]`.
-- Personal scores combine with general/occasion scores, and repeated preference can override default silhouette and palette priors. A displayed taste score is an uncalibrated heuristic, **not a probability**.
-- Insights require repeated observations and sufficient confidence; overlapping statements are deduplicated. Style DNA and the optional summary API share this evidence gate. Full profile inspection is development-only.
-
-### Wardrobe-gap algorithm
-
-For each not-owned archetype, evaluate a color from the user's dominant closet palette (canonical fallback) and generate up to 300 valid hypothetical outfits that **must include that candidate**. Every other piece must already be owned.
-
-Require shared outfit quality of at least `0.70` or the current closet's 65th-percentile quality minus `0.02`, whichever is greater. Personal scores must reach `0.55` after three ratings, otherwise the neutral `0.50`. Recolored duplicates count once.
-
-The ranking value is **sum(quality × personal preference) × diversity** for qualifying new outfits. This prevents raw combination count alone from deciding the ranking. Each card shows sampled count, likely count, compatible owned pieces and three diverse qualifying previews where available. Estimates are bounded samples, not exhaustive counts or validated predictions of what a person will wear.
-
-### AI usage and environment variables
-
-The primary product is deterministic and usable without keys. The optional **Put my style into words** action goes through the Node API. It returns an evidence-grounded deterministic summary by default. An Anthropic implementation can turn the same evidence into a short explanation.
-
-Copy `.env.example` to `.env` locally if enabling the provider:
-
-| Variable            | Purpose                                                        |
-| ------------------- | -------------------------------------------------------------- |
-| `AI_PROVIDER`       | `none` by default; `anthropic` opts into live summaries        |
-| `ANTHROPIC_API_KEY` | Server-only secret; never use a `VITE_` prefix                 |
-| `ANTHROPIC_MODEL`   | Explicit model available to your Anthropic account             |
-| `API_PORT`          | Local API port, default `3001`; match Vite's proxy if changing |
-
-Only the selected preference labels go to the model, not the closet inventory or feedback history. The LLM does not determine ownership, validity, outfit selection, gap counts or preference weights. Provider calls have a timeout and a deterministic fallback for rejected responses. The API binds to loopback and is intended for local development; a hosted deployment needs a same-origin API boundary and appropriate access/rate controls. No live paid model call was made during development.
-
-### Persistence and instrumentation
-
-`wearwell:v1` stores selected IDs, every feedback event, profile, saved looks, the latest 60 generated looks, the in-progress onboarding draft and completion/insight flags. Existing completed users retain their normal product experience. Storage errors produce a visible notice. Unknown catalog entries and invalid saved outfit ownership are removed on load. Removing an owned piece invalidates saved/generated outfits containing it, while historical feedback remains for taste learning.
-
-Events include closet additions/completion, outfit views, likes/dislikes, reason selection, profile generation, personalized generation, swaps and missing-item exploration. They stay local; no analytics provider or network telemetry is connected. Style DNA displays observed acceptance before/after personalization. Those tiny-sample figures are descriptive, not proof of model accuracy.
-
-## Verification
-
-Run `npm test` for catalog validation, hard outfit rules, owned-only generation, diverse exploration, reason-targeted updates, opposite-persona ranking, improved learned scores, exact one-item swaps, preference-weighted missing items, persistence/corruption/quota handling and the no-key server fallback.
-
-The browser demo was manually exercised through selection, five feedback actions, real insights, personalized recommendations, occasion generation, swapping, saving, reload, style summary and gap previews. See [docs/QA.md](docs/QA.md) for the final verification record.
-
-## Current limitations
-
-- Local single-browser prototype: no accounts, sync or deployment configured.
-- 72 representative archetypes with twelve colors each; actual fabric weights and individual garment measurements are not captured.
-- Atlas cells and tinting are approximation artwork; long garments may have tight crop margins. Per-item transparent assets are the natural next step.
-- Occasion, compatibility and preference scores are explainable heuristics, not a professionally validated styling model. A small closet limits variety, and five ratings yield tentative signals.
-- Gap search uses a representative closet color for each missing archetype and bounded combinations; it does not search every possible color or guarantee the global optimum.
-- Live Anthropic calls are optional and were not exercised without credentials. The shipped experience does not depend on them.
-- Fonts are requested from Google Fonts with local system fallbacks.
-
-## Future directions
-
-Improve evidence confidence and exploration, add better transparent garment artwork and selected archetypes, validate suggestions with real wearer feedback, add a storage backend behind the existing adapter, and evaluate optional provider summaries. Shopping, brands, prices, packing, virtual try-on, social feeds and custom model training remain outside this MVP.
+Next, validate whether people actually choose and wear the looks, measure time-to-decision and retention with consent, and use that evidence to improve visual judgments and personalization confidence before adding infrastructure or monetization.
 
 ## Attribution
 
-[Cher's Closet](https://github.com/hastalasophia/chers-closet), designed and built by **Sophia Liu**, inspired the image-led closet browsing and flat-lay outfit interaction. Its README, CLAUDE.md, source, data model, illustration loader and Magic Build prompt were inspected before implementation.
+[Cher's Closet](https://github.com/hastalasophia/chers-closet), designed and built by **Sophia Liu**, inspired image-led closet browsing and flat-lay interaction. Wearwell is an independent implementation; upstream application code, personal data and styling prompts were not copied.
 
-No upstream application code, personal dataset, illustration, icon, font or personal styling prompt was copied. The inspected reference repository had no license file; public availability was not treated as a license grant. Wearwell's product loop, code, metadata, learning engine, gap algorithm and generated garment atlas were created for this project. Third-party npm packages and fonts retain their respective licenses.
+Garment artwork was created for this prototype. Brand marks identify editorial references and remain their owners' property; source records are in [Brand assets](docs/BRAND_ASSETS.md). See also [Garment assets](docs/GARMENT_ASSETS.md). Third-party packages and fonts retain their respective licenses.

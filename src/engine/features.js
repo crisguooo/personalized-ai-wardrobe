@@ -1,5 +1,8 @@
 import { BY_ID } from "../data/catalog.js";
-import { palette } from "./palette.js";
+import { palette, colorFeatures } from "./palette.js";
+import { matchedFormulas } from "./formulas.js";
+import { aestheticScores } from "./aesthetics.js";
+import { inferDirection } from "./directions.js";
 export const REASONS = [
   "Too basic",
   "Too fitted",
@@ -45,6 +48,19 @@ export const LABELS = {
   tonal: "Tonal palettes",
   multiColor: "Expressive color combinations",
   relaxedStructured: "Relaxed tops with structured bottoms",
+  colorWarm: "Warm palettes",
+  colorCool: "Cool palettes",
+  colorNeutral: "Neutral temperatures",
+  colorMuted: "Muted colors",
+  colorVivid: "Vivid colors",
+  colorLowContrast: "Soft tonal contrast",
+  colorMediumContrast: "Moderate light-dark contrast",
+  colorHighContrast: "Strong light-dark contrast",
+  colorSimplePalette: "Focused palettes",
+  colorComplexPalette: "Layered color relationships",
+  colorAccent: "Controlled color accents",
+  colorTonal: "Tonal color depth",
+  colorContrast: "Intentional color contrast",
 };
 const loose = (i) => ["relaxed", "oversized", "wide-leg"].includes(i.fit);
 const slim = (i) => ["fitted", "skinny"].includes(i.fit);
@@ -103,10 +119,21 @@ export function features(outfit) {
   const colorsInfo = palette(outfit);
   f.neutralAccent = +colorsInfo.neutralAccent;
   f.tonal = +colorsInfo.tonal;
-  f.multiColor = +(colorsInfo.dominantCount > 3 || colorsInfo.unrelated > 1);
+  f.multiColor = colorFeatures(colorsInfo).colorComplexPalette;
+  Object.assign(f, colorFeatures(colorsInfo));
   f.relaxedStructured = +(loose(top) && bottom.structure === "structured");
   f.interest = visualInterest(items, colorsInfo);
   f.lowComplexity = 1 - f.interest;
+  for (const formula of matchedFormulas(items)) f[`formula_${formula.id}`] = 1;
+  const aesthetics = aestheticScores(items, "Everyday");
+  // These features let repeated likes support intentional departures too.
+  f.weightContrast = 1 - aesthetics.visualWeight;
+  f.styleMix = 1 - aesthetics.styleCoherence;
+  f.seasonMix = 1 - aesthetics.thermalCoherence;
+  f.multipleFocals = 1 - aesthetics.focalHierarchy;
+  f[
+    `direction_${outfit.aestheticDirection ?? inferDirection(items, outfit.occasion)}`
+  ] = 1;
   return f;
 }
 
@@ -133,6 +160,6 @@ export function visualInterest(items, colorInfo) {
       0.12 * proportion +
       0.1 * focal +
       0.12 * (colorInfo.highContrast || colorInfo.neutralAccent) +
-      0.08 * (colorInfo.dominantCount > 3),
+      0.08 * colorFeatures(colorInfo).colorComplexPalette,
   );
 }

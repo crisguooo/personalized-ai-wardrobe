@@ -1,7 +1,8 @@
+import { assignLayers, isLayer, canFillLayer } from "../data/layers.js";
 import { BY_ID } from "../data/catalog.js";
 import { generate, rank, validity } from "./wardrobe.js";
 
-import { palette } from "./palette.js";
+import { annotateLook, composition } from "./directions.js";
 
 export const today = () => new Date().toLocaleDateString("en-CA");
 export const toC = (value, unit) =>
@@ -67,12 +68,63 @@ export const guideFor = (item, overrides = {}) => {
   return guide;
 };
 
+// Choose a seasonal base/pool before silhouette formulas assemble outfits.
+// Cold exposure cannot be cancelled out by a coat's additive warmth score.
+export function wearableForWeather(item, weather, overrides = {}) {
+  if (!item) return false;
+  if (!validRange(weather?.lowC, weather?.highC)) return true;
+  const low = weather.lowC - comfortOffset(weather);
+  const coldLow = Math.min(low, weather.lowC);
+  const guide = guideFor(item, overrides);
+  if (item.category === "top") {
+    if (coldLow < -10) return item.archetype === "thermal-top";
+    if (coldLow < 12)
+      return item.thermal.coverage === 3 && item.archetype !== "linen-shirt";
+    if (item.archetype === "thermal-top" && low > 16) return false;
+    if (low >= 26)
+      return (
+        guide.minC >= 25 &&
+        (item.thermal.coverage <= 1 || item.archetype === "linen-shirt")
+      );
+    if (low >= 22) return guide.minC >= 24;
+    return true;
+  }
+  const override = overrides[item.id];
+  const wearMax = override?.maxC ?? guide.wearMaxC;
+  const wearMin = override?.minC ?? guide.wearMinC;
+  // Boots cannot be shed like a coat; the default is strictly below 5°C.
+  const at = item.archetype === "winter-boots" ? weather.lowC : low;
+  if (
+    wearMax !== null &&
+    wearMax !== undefined &&
+    (guide.wearMaxExclusive ? at >= wearMax : at > wearMax)
+  )
+    return false;
+  if (guide.wearMinC !== null && wearMin !== null && at < wearMin) return false;
+  if (low >= 24 && ["midlayer", "outerwear"].includes(item.category))
+    return false;
+  if (low >= 22 && item.category === "bottom" && item.thermal.winterLevel > 0)
+    return false;
+  return true;
+}
+
+export function weatherPool(ids, weather, overrides = {}) {
+  return [...new Set(ids)].filter((id) =>
+    wearableForWeather(BY_ID[id], weather, overrides),
+  );
+}
+
 export function weatherRequirements(temp, weather, overrides = {}) {
   const rules = [];
   const add = (key, label, examples, check) =>
     rules.push({ key, label, examples, check });
-  const has = (items, category, predicate = () => true) =>
-    items.some((i) => i.category === category && predicate(i));
+  const has = (items, category, predicate = () => true) => {
+    if (["midlayer", "outerwear"].includes(category)) {
+      const role = category === "midlayer" ? "midLayer" : "outerLayer";
+      return items.some((i) => canFillLayer(i, role) && predicate(i));
+    }
+    return items.some((i) => i.category === category && predicate(i));
+  };
   if (temp < 26)
     add("sleeves", "Long sleeves", ["long-sleeve", "button-shirt"], (items) =>
       items.some(
@@ -137,9 +189,21 @@ export function weatherRequirements(temp, weather, overrides = {}) {
   const personalCoat =
     weather.comfort === "custom" &&
     temp + comfortOffset(weather) <= weather.coatBelowC;
-  if (temp < 0)
+  if (temp < -5)
     add("coat", "Insulated winter coat", ["long-puffer", "parka"], (items) =>
       has(items, "outerwear", (i) => i.thermal.winterLevel >= 2),
+    );
+  else if (temp < 0)
+    add(
+      "coat",
+      "Insulated winter coat",
+      ["puffer", "long-puffer", "parka"],
+      (items) =>
+        has(
+          items,
+          "outerwear",
+          (i) => i.archetype === "puffer" || i.thermal.winterLevel >= 2,
+        ),
     );
   else if (temp < 8 || personalCoat)
     add("coat", "Winter coat", ["puffer", "wool-coat"], (items) =>
@@ -198,7 +262,7 @@ export function weatherRequirements(temp, weather, overrides = {}) {
 export function weatherNeeds(ids, weather, overrides = {}) {
   if (!validRange(weather?.lowC, weather?.highC))
     return { missing: [], requirements: [] };
-  const items = ids.map((id) => BY_ID[id]).filter(Boolean);
+  const items = weatherPool(ids, weather, overrides).map((id) => BY_ID[id]);
   const requirements = weatherRequirements(
     weather.lowC - comfortOffset(weather),
     weather,
@@ -214,6 +278,38 @@ export function weatherNeeds(ids, weather, overrides = {}) {
     missing = missing.filter((r) => r.key !== "sleeves");
   if (missing.some((r) => r.key === "winter-base"))
     missing = missing.filter((r) => !["warm-base", "sleeves"].includes(r.key));
+  // A closet can have all three categories yet no seasonally usable base/shoes.
+  // Explain that shortage instead of sneaking winter items into a summer look.
+  const warm = weather.lowC - comfortOffset(weather) >= 22;
+  for (const [category, key, label, examples, existing] of [
+    [
+      "top",
+      "seasonal-base",
+      warm ? "Light, breathable top" : "A suitable base layer",
+      warm ? ["crew-tee", "linen-shirt"] : ["long-sleeve", "knit"],
+      ["winter-base", "thermal-base", "warm-base", "sleeves"],
+    ],
+    [
+      "bottom",
+      "seasonal-bottoms",
+      "Lighter bottoms",
+      ["linen-trousers", "cotton-shorts"],
+      ["bottoms", "lined-bottoms"],
+    ],
+    [
+      "shoes",
+      "seasonal-shoes",
+      warm ? "Lighter shoes" : "Everyday shoes",
+      ["sneakers", "loafers"],
+      ["boots", "covered-shoes"],
+    ],
+  ]) {
+    if (
+      !items.some((i) => i.category === category) &&
+      !missing.some((r) => existing.includes(r.key))
+    )
+      missing.push({ key, label, examples, styling: false, seasonal: true });
+  }
   return { missing, requirements };
 }
 
@@ -261,8 +357,14 @@ export function weatherFit(outfit, weather, overrides = {}) {
     );
     const minC = base.minC - reduction,
       maxC = unventedMax + ventilation;
+    const ambientHeat = kept.map((i) => {
+      const guide = guideFor(i, overrides);
+      if (guide.wearMaxC === null || guide.wearMaxC === undefined) return 0;
+      const at = i.archetype === "winter-boots" ? temp + offset : temp;
+      return at - (overrides[i.id]?.maxC ?? guide.wearMaxC);
+    });
     const coldGap = Math.max(0, minC - temp),
-      hotGap = Math.max(0, temp - maxC);
+      hotGap = Math.max(0, temp - maxC, ...ambientHeat);
     const missing = (temp === low ? lowRules : highRules).filter(
       (r) => !r.check(kept),
     );
@@ -303,35 +405,207 @@ export function weatherFit(outfit, weather, overrides = {}) {
     afternoonRange: [best.minC + offset, best.maxC + offset],
   };
 }
-export function weatherCandidates(ids) {
-  const candidates = generate(ids);
-  const all = new Map(candidates.map((o) => [o.id, o]));
-  for (const outfit of candidates) {
-    const core = outfit.itemIds.filter(
-      (id) => BY_ID[id].category !== "accessory",
+const optionalCategory = (i) =>
+  ["midlayer", "outerwear", "accessory"].includes(i.category);
+function replacePiece(outfit, item) {
+  const assigned = assignLayers(outfit.itemIds.map((id) => BY_ID[id]));
+  const occupied = isLayer(item)
+    ? canFillLayer(item, "midLayer")
+      ? assigned.mid
+      : assigned.outer
+    : null;
+  const itemIds = outfit.itemIds.filter((id) => {
+    const old = BY_ID[id];
+    if (isLayer(item)) return old.id !== occupied?.id && old.id !== item.id;
+    return (
+      old.category !== item.category ||
+      (item.category === "accessory" &&
+        old.accessorySlot !== item.accessorySlot)
     );
-    const extras = [];
-    for (const key of ["scarf", "beanie", "gloves"]) {
-      const options = ids.filter((id) => BY_ID[id]?.archetype === key);
-      options.sort(
-        (a, b) =>
-          palette({ itemIds: [...core, ...extras, a] }).penalty -
-            palette({ itemIds: [...core, ...extras, b] }).penalty ||
-          a.localeCompare(b),
+  });
+  itemIds.push(item.id);
+  return annotateLook({
+    ...outfit,
+    itemIds,
+    id: [...itemIds].sort().join("|"),
+  });
+}
+export function weatherEssentialIds(outfit, weather, overrides = {}) {
+  const full = weatherFit(outfit, weather, overrides);
+  return outfit.itemIds
+    .filter((id) => optionalCategory(BY_ID[id]))
+    .filter((id) => {
+      const without = weatherFit(
+        { ...outfit, itemIds: outfit.itemIds.filter((x) => x !== id) },
+        weather,
+        overrides,
       );
-      if (options[0]) extras.push(options[0]);
+      return (
+        without.missing.length > full.missing.length ||
+        without.coldGap > Math.max(2, full.coldGap + 1)
+      );
+    });
+}
+export function weatherCandidates(
+  ids,
+  profile,
+  weather,
+  overrides = {},
+  occasion = "Everyday",
+) {
+  // First design complete looks using occasion and taste, with no weather input.
+  const drafts = generate(ids, { profile, occasion });
+  if (!validRange(weather?.lowC, weather?.highC)) return drafts;
+  const pool = weatherPool(ids, weather, overrides).map((id) => BY_ID[id]);
+  if (
+    ["top", "bottom", "shoes"].some(
+      (category) => !pool.some((i) => i.category === category),
+    )
+  )
+    return [];
+  const rules = weatherRequirements(
+    weather.lowC - comfortOffset(weather),
+    weather,
+    overrides,
+  );
+  const valid = (o) => !validity(o, ids).length;
+  const fits = new Map();
+  const fit = (o) => {
+    if (!fits.has(o.id)) fits.set(o.id, weatherFit(o, weather, overrides));
+    return fits.get(o.id);
+  };
+  const choose = (looks, count = 2) =>
+    [...new Map(looks.filter(valid).map((o) => [o.id, o])).values()]
+      .map((o) => ({ o, fit: fit(o), quality: composition(o).quality }))
+      .sort(
+        (a, b) =>
+          a.fit.missing.length - b.fit.missing.length ||
+          (Math.max(0, a.fit.coldGap - 2) + Math.max(0, a.fit.hotGap - 3)) /
+            12 -
+            (Math.max(0, b.fit.coldGap - 2) + Math.max(0, b.fit.hotGap - 3)) /
+              12 +
+            b.quality -
+            a.quality ||
+          a.o.id.localeCompare(b.o.id),
+      )
+      .slice(0, count)
+      .map(({ o }) => o);
+  const lanes = new Map();
+  for (const o of drafts) {
+    const key = `${o.aestheticDirection}|${o.outfitArchetype}|${o.colorStrategy}`;
+    if (!lanes.has(key)) lanes.set(key, []);
+    lanes.get(key).push(o);
+  }
+  const seedLanes = [...lanes.values()].map((lane) =>
+    lane
+      .sort((a, b) => composition(b).quality - composition(a).quality)
+      .slice(0, 2),
+  );
+  // Preserve alternative color intentions through weather adjustment, with a
+  // fixed search budget instead of filling every slot with one neutral palette.
+  const seeds = [];
+  for (let n = 0; n < 2 && seeds.length < 160; n++)
+    for (const lane of seedLanes)
+      if (lane[n] && seeds.length < 160) seeds.push(lane[n]);
+  const output = new Map();
+  for (const seed of seeds) {
+    const itemIds = seed.itemIds.filter(
+      (id) =>
+        !optionalCategory(BY_ID[id]) ||
+        wearableForWeather(BY_ID[id], weather, overrides),
+    );
+    let beam = [
+      {
+        ...seed,
+        styleSeedId: seed.id,
+        itemIds,
+        id: [...itemIds].sort().join("|"),
+      },
+    ];
+    for (const category of ["top", "bottom", "shoes"]) {
+      beam = choose(
+        beam.flatMap((o) => {
+          const original = o.itemIds
+            .map((id) => BY_ID[id])
+            .find((i) => i.category === category);
+          return wearableForWeather(original, weather, overrides)
+            ? [o]
+            : pool
+                .filter((i) => i.category === category)
+                .map((i) => replacePiece(o, i));
+        }),
+      );
     }
-    for (let count = 0; count <= extras.length; count++) {
-      const bundle = extras.slice(0, count);
-      const itemIds = [
-        ...outfit.itemIds.filter((id) => BY_ID[id].category !== "accessory"),
-        ...bundle,
-      ];
-      const next = { id: [...itemIds].sort().join("|"), itemIds };
-      if (!validity(next, ids).length) all.set(next.id, next);
+    for (const rule of rules) {
+      beam = choose(
+        beam.flatMap((o) => {
+          const items = o.itemIds.map((id) => BY_ID[id]);
+          if (rule.check(items)) return [o];
+          const satisfied = rules.filter((r) => r.check(items));
+          const alternatives = pool
+            .map((i) => replacePiece(o, i))
+            .filter((next) => {
+              const nextItems = next.itemIds.map((id) => BY_ID[id]);
+              return (
+                rule.check(nextItems) &&
+                satisfied.every((r) => r.check(nextItems)) &&
+                valid(next)
+              );
+            });
+          return alternatives.length ? alternatives : [o];
+        }),
+      );
+    }
+    // More insulation earns a place only when there is an actual cold deficit.
+    beam = choose(
+      beam.flatMap((o) =>
+        fit(o).coldGap <= 2
+          ? [o]
+          : [
+              o,
+              ...pool.filter(optionalCategory).map((i) => replacePiece(o, i)),
+            ],
+      ),
+    );
+    for (let o of beam) {
+      let reduced = true;
+      while (reduced) {
+        reduced = false;
+        for (const id of [...o.itemIds].reverse()) {
+          if (!optionalCategory(BY_ID[id])) continue;
+          const itemIds = o.itemIds.filter((x) => x !== id);
+          const without = { ...o, itemIds, id: [...itemIds].sort().join("|") };
+          const fullFit = fit(o),
+            lessFit = fit(without);
+          if (
+            lessFit.missing.length <= fullFit.missing.length &&
+            lessFit.coldGap <= Math.max(2, fullFit.coldGap + 1) &&
+            lessFit.hotGap <= Math.max(3, fullFit.hotGap) &&
+            composition(o).quality - composition(without).quality < 0.018
+          ) {
+            o = without;
+            reduced = true;
+            break;
+          }
+        }
+      }
+      o = annotateLook(
+        {
+          ...o,
+          requiredForWeather: weatherEssentialIds(o, weather, overrides),
+        },
+        occasion,
+      );
+      if (
+        valid(o) &&
+        o.itemIds.every((id) =>
+          wearableForWeather(BY_ID[id], weather, overrides),
+        )
+      )
+        output.set(o.id, o);
     }
   }
-  return [...all.values()];
+  return [...output.values()];
 }
 export function rankForWeather(
   candidates,
@@ -345,7 +619,16 @@ export function rankForWeather(
     return rank(candidates, profile, occasion, options);
   const eligible = candidates
     .filter((o) => !validity(o).length)
-    .map((o) => ({ ...o, weatherFit: weatherFit(o, weather, overrides) }))
+    .filter((o) =>
+      o.itemIds.every((id) =>
+        wearableForWeather(BY_ID[id], weather, overrides),
+      ),
+    )
+    .map((o) => ({
+      ...o,
+      requiredForWeather: weatherEssentialIds(o, weather, overrides),
+      weatherFit: weatherFit(o, weather, overrides),
+    }))
     .filter(
       (o) =>
         !o.weatherFit.missing.some((r) =>
@@ -353,14 +636,27 @@ export function rankForWeather(
         ),
     );
   if (!eligible.length) return [];
-  const best = Math.min(...eligible.map((o) => o.weatherFit.penalty));
-  // Never trade away temperature suitability just to obtain a nicer palette.
-  return rank(
-    eligible.filter((o) => o.weatherFit.penalty <= best + 3),
-    profile,
-    occasion,
-    options,
+  // Protect against cold, but don't let fractional temperature arithmetic
+  // decide which of two comfortable outfits is aesthetically better.
+  const missing = Math.min(...eligible.map((o) => o.weatherFit.missing.length));
+  const covered = eligible.filter(
+    (o) => o.weatherFit.missing.length === missing,
   );
+  const discomfort = (o) =>
+    Math.max(0, o.weatherFit.coldGap - 2) +
+    Math.max(0, o.weatherFit.hotGap - 3);
+  const best = Math.min(...covered.map(discomfort));
+  let suitable = covered.filter((o) => discomfort(o) <= best + 1);
+  // On an all-day warm forecast, avoid introducing an unnecessary coat just
+  // to satisfy a silhouette recipe. Respect personal temperature offsets.
+  if (weather.lowC - comfortOffset(weather) >= 22) {
+    const light = suitable.filter(
+      (o) => !assignLayers(o.itemIds.map((id) => BY_ID[id])).outer,
+    );
+    if (light.length) suitable = light;
+  }
+  // Never trade away temperature suitability just to obtain a nicer palette.
+  return rank(suitable, profile, occasion, options);
 }
 export function weatherReason(outfit, weather, overrides = {}) {
   if (!outfit) return "";
@@ -368,9 +664,9 @@ export function weatherReason(outfit, weather, overrides = {}) {
   const names = (ids) =>
     ids.map((id) => BY_ID[id].name.toLowerCase()).join(" + ");
   if (fit.missing.length)
-    return `This look is incomplete for the ${temperature(weather.lowC, weather.unit)} low: it still needs ${fit.missing.map((r) => r.label.toLowerCase()).join(", ")}.`;
+    return `You may feel cold at ${temperature(weather.lowC, weather.unit)}. For more warmth, add ${fit.missing.map((r) => r.label.toLowerCase()).join(", ")}.`;
   if (fit.coldGap > 2)
-    return `These are your warmest available layers for ${temperature(weather.lowC, weather.unit)}, but their estimated coverage is still too light; add a thermal base, warmer midlayer or insulated coat.`;
+    return `You may still feel cold at ${temperature(weather.lowC, weather.unit)} in these layers. ${assignLayers(outfit.itemIds.map((id) => BY_ID[id])).mid ? "More insulating versions of your coat or base layers would help." : "An insulating midlayer would help retain more warmth."}`;
   if (fit.hotGap > 3)
     return `These pieces cover the required areas, but may feel too warm at ${temperature(fit.afternoonHotGap > 3 ? weather.highC : weather.lowC, weather.unit)}; a lighter base or lighter bottoms would help.`;
   const top = outfit.itemIds.find((id) => BY_ID[id].category === "top");

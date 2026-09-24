@@ -53,7 +53,7 @@ const GUIDES = {
   bomber: [13, 20, 6, 3],
   raincoat: [17, 23, 3, 3],
   "wool-coat": [4, 13, 10, 3, 1],
-  puffer: [0, 10, 13, 3, 1],
+  puffer: [-5, 10, 13, 3, 1],
   "long-puffer": [-12, 5, 18, 3, 2],
   parka: [-15, 4, 18, 3, 2],
   sandals: [28, 34, 0, 1],
@@ -62,7 +62,7 @@ const GUIDES = {
   sneakers: [26, 29, 1, 3],
   "ankle-boots": [25, 28, 2, 3],
   "tall-boots": [24, 27, 3, 3],
-  "winter-boots": [25, 29, 2, 3, 2],
+  "winter-boots": [-25, 5, 3, 3, 2],
   scarf: [0, 12, 0.5, 0, 1],
   beanie: [-10, 8, 0.5, 0, 1],
   gloves: [-15, 5, 0.5, 0, 1],
@@ -79,6 +79,16 @@ export function thermalGuide(key, category) {
     coverage,
     winterLevel,
     active,
+    // Ambient wear limits are separate from additive insulation estimates.
+    wearMinC: key === "puffer" ? -5 : null,
+    wearMaxC:
+      key === "winter-boots"
+        ? 5
+        : ["outerwear", "midlayer"].includes(category) ||
+            ["scarf", "beanie", "gloves"].includes(key)
+          ? maxC
+          : null,
+    wearMaxExclusive: key === "winter-boots",
     shell: category === "outerwear" || ["fleece-jacket", "vest"].includes(key),
     winterBase: category === "top" && coverage === 3 && minC <= 23,
     ventilationC:

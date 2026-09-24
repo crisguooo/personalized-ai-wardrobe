@@ -1,0 +1,196 @@
+.missing-simple {
+  max-width: 760px;
+  margin: 0 auto;
+  min-height: 62vh;
+  text-align: center;
+  padding: 20px 0 40px;
+}
+.missing-simple h1 {
+  font-size: clamp(36px, 4vw, 52px);
+  letter-spacing: -1px;
+}
+.missing-intro {
+  margin-top: 14px;
+  font-size: 14px;
+}
+.missing-tags {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  margin: 26px 0 30px;
+}
+.missing-tags button {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid var(--line);
+  border-radius: 30px;
+  padding: 12px 17px;
+  font-size: 14px;
+}
+.missing-tags button.active {
+  border-color: var(--red);
+  color: var(--red);
+  background: #bf422f08;
+}
+.missing-tags button.active svg {
+  transform: rotate(180deg);
+}
+.missing-piece {
+  max-width: 460px;
+  margin: 0 auto;
+}
+.missing-visual {
+  width: 210px;
+  height: 190px;
+  margin: 0 auto 18px;
+}
+.missing-visual > .garment {
+  width: 100%;
+  height: 100%;
+}
+.missing-piece h2 {
+  font-size: 32px;
+}
+.missing-reason {
+  font-size: 14px;
+  line-height: 1.6;
+  margin: 12px auto 8px;
+  max-width: 360px;
+}
+.missing-count {
+  color: var(--red);
+  font-size: 18px;
+  font-weight: 500;
+}
+.missing-count small {
+  margin-left: 5px;
+  font-size: 11px;
+  font-weight: 400;
+}
+.missing-actions {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 8px 24px;
+  margin: 18px 0 0;
+}
+.missing-actions button {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+  min-height: 44px;
+  padding: 4px 0;
+  font-size: 13px;
+}
+.missing-actions button[aria-expanded="true"] {
+  color: var(--red);
+}
+.missing-colors,
+.missing-ideas {
+  margin-top: 16px;
+  padding-top: 22px;
+  border-top: 1px solid var(--line);
+}
+.missing-colors p {
+  font-size: 13px;
+}
+.missing-colors b {
+  text-transform: capitalize;
+  margin-left: 5px;
+  color: var(--ink);
+  font-weight: 500;
+}
+.missing-swatches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: center;
+  max-width: 300px;
+  margin: 14px auto 18px;
+}
+.missing-swatches button {
+  flex: 0 0 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 1px solid transparent;
+  display: grid;
+  place-items: center;
+  position: relative;
+  isolation: isolate;
+}
+.missing-swatches button::before {
+  content: "";
+  position: absolute;
+  inset: 6px;
+  background: var(--swatch);
+  border: 1px solid #29292325;
+  border-radius: 50%;
+  z-index: -1;
+}
+.missing-swatches button[aria-pressed="true"] {
+  border-color: var(--ink);
+}
+.missing-swatches svg {
+  background: var(--paper);
+  border-radius: 50%;
+  padding: 2px;
+  width: 19px;
+  height: 19px;
+}
+.missing-add {
+  min-height: 44px;
+  padding: 12px 22px;
+  gap: 8px;
+}
+.missing-ideas .flatlay {
+  max-width: 350px;
+  margin: 0 auto;
+}
+.missing-pager {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+  margin-top: 8px;
+}
+.missing-pager span {
+  font-size: 11px;
+  color: var(--muted);
+}
+.missing-pager button {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+}
+.missing-added {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 13px;
+  margin-bottom: 20px;
+  color: var(--ink);
+}
+@media (max-width: 600px) {
+  .missing-simple {
+    padding-top: 4px;
+  }
+  .missing-tags {
+    gap: 8px;
+    margin: 22px 0 26px;
+  }
+  .missing-tags button {
+    padding: 11px 13px;
+    font-size: 12px;
+  }
+  .missing-visual {
+    height: 160px;
+    width: 180px;
+  }
+  .missing-piece h2 {
+    font-size: 29px;
+  }
+}

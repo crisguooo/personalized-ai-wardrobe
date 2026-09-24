@@ -1,9 +1,13 @@
+import { assignLayers } from "../data/layers.js";
 import { BY_ID } from "../data/catalog.js";
 import { features, visualInterest } from "./features.js";
 import { preferenceScore, learn } from "./profile.js";
 import { validity } from "./compatibility.js";
 import { palette } from "./palette.js";
 import { objective } from "./occasions.js";
+import { formulaScore } from "./formulas.js";
+import { aestheticScores } from "./aesthetics.js";
+import { intentionalityScores } from "./directions.js";
 export const clamp = (n) => Math.max(0, Math.min(1, n));
 const mean = (xs) =>
   xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : 0;
@@ -28,9 +32,11 @@ export function silhouetteScore(items, profile = {}) {
   return clamp(prior + Math.max(0, preference ?? 0) * 0.48);
 }
 export function layeringScore(items) {
-  const stack = ["top", "midlayer", "outerwear"]
-    .map((c) => items.find((i) => i.category === c))
-    .filter(Boolean);
+  const assignment = assignLayers(items);
+  if (assignment.errors.length) return 0;
+  const stack = [assignment.base, assignment.mid, assignment.outer].filter(
+    Boolean,
+  );
   if (stack.length === 1) return 0.84;
   const lengths = { cropped: 0, waist: 1, hip: 2, long: 3 };
   const scores = stack.slice(1).map((outer, i) => {
@@ -110,6 +116,7 @@ export function scoreBreakdown(
   if (errors.length)
     return { valid: false, total: 0, rules: errors, scores: {}, weights: {} };
   const items = outfit.itemIds.map((id) => BY_ID[id]);
+  const layers = assignLayers(items, outfit.layerStructure);
   const plan = objective(occasion, options.refinement);
   const color = palette(outfit, profile),
     qualities = clothingQualities(items),
@@ -123,6 +130,16 @@ export function scoreBreakdown(
       ((profile.weights?.dressy ?? 0) - (profile.weights?.casual ?? 0)) * 0.12,
   );
   const silhouette = silhouetteScore(items, profile);
+  const aesthetics = aestheticScores(items, occasion);
+  for (const [metric, feature] of [
+    ["visualWeight", "weightContrast"],
+    ["styleCoherence", "styleMix"],
+    ["thermalCoherence", "seasonMix"],
+    ["focalHierarchy", "multipleFocals"],
+  ])
+    aesthetics[metric] = clamp(
+      aesthetics[metric] + Math.max(0, profile.weights?.[feature] ?? 0) * 0.35,
+    );
   const layering = clamp(layeringScore(items) + plan.layerBonus * f.layered);
   const formalityFit = near(qualities.formality, targetFormality);
   let occasionScore;
@@ -157,6 +174,11 @@ export function scoreBreakdown(
     options.refinement === "More dressy"
   )
     occasionScore = 0.25 * occasionScore + 0.75 * formalityFit;
+  const intent = intentionalityScores(
+    outfit,
+    occasion,
+    options.requiredForWeather ?? outfit.requiredForWeather ?? [],
+  );
   const scores = {
     silhouette,
     layering,
@@ -165,6 +187,12 @@ export function scoreBreakdown(
     occasion: clamp(occasionScore),
     comfort: qualities.comfort,
     personal: preferenceScore(outfit, profile),
+    formula: formulaScore(items, profile),
+    ...aesthetics,
+    cohesion: intent.cohesion,
+    intentionality: intent.intentionality,
+    shoeCompatibility: intent.shoeCompatibility,
+    directionCoherence: intent.directionCoherence,
   };
   const total = Object.entries(plan.weights).reduce(
     (sum, [k, w]) => sum + scores[k] * w,
@@ -190,6 +218,19 @@ export function scoreBreakdown(
       targetFormality,
       dominantColors: color.dominantCount,
     },
+    layerStructure: layers.structure,
+    layerAssignments: Object.fromEntries(
+      ["base", "mid", "outer"].map((role) => [role, layers[role]?.id ?? null]),
+    ),
+    colorDebug: {
+      strategy: color.strategyLabel,
+      ...color.scores,
+      final: color.score,
+      roles: color.metrics.roles,
+      garments: color.visibleColors,
+    },
+    aestheticDirection: intent.aestheticDirection,
+    redundantItemIds: intent.redundantItemIds,
     rules,
   };
 }

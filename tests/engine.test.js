@@ -45,7 +45,7 @@ const fitted = outfit(
 );
 test("canonical metadata is complete, unique and consistent with art registry", () => {
   assert.equal(ARCHETYPES.length, 72);
-  assert.equal(CATALOG.length, 864);
+  assert.equal(CATALOG.length, 1008);
   assert.equal(new Set(CATALOG.map((i) => i.id)).size, CATALOG.length);
   for (const i of CATALOG) {
     for (const k of [
@@ -64,7 +64,9 @@ test("canonical metadata is complete, unique and consistent with art registry", 
     assert(
       i.assetKey === "wardrobe-atlas"
         ? i.sprite >= 0 && i.sprite < 36
-        : ["tall-boots", "scarf", "extra-vector"].includes(i.assetKey),
+        : i.assetKey === "wardrobe-seasonal-atlas" &&
+            i.sprite >= 36 &&
+            i.sprite < 72,
     );
     assert(i.thermal.minC <= i.thermal.maxC);
     assert(i.styleTags.length);

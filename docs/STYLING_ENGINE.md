@@ -1,78 +1,69 @@
-# Deterministic styling engine
+# Wearwell styling engine
 
-## Repository audit and scope
+## Recommendation order
 
-The existing product was already deterministic. `server/provider.js` only generated optional style-profile prose; it never chose clothes. The previous weaknesses were in the local engine:
+Occasion + learned taste → one aesthetic direction → silhouette archetype → layering structure → hero/anchor → supporting pieces (including shoes) → complete-look evaluation → weather adaptation → personal reranking and diversity.
 
-| Area | Previous implementation | Refactor |
-| --- | --- | --- |
-| Clothing schema | 72 archetypes / 864 stable color IDs; categories, fit, tags, coarse formality/warmth, thermal guides | Enrich those IDs with construction and styling defaults; retain existing wardrobe records and artwork |
-| Candidate generation | Build the core Cartesian product, hash/sample it, add layers/accessories | Indexed bounded sampling; conservative physical validation; retain both plain and accessorized candidates |
-| Occasions | Small additive dressiness/casualness bonuses; selecting an occasion changed the label until generation | Five centralized objective profiles; selecting an occasion immediately scores/selects its outfit |
-| Swipe learning | Feature weights, reason targeting, archetype-pair scores; every dislike also penalized the pair | Reason-only attribution, weak ambiguous dislikes, repeated-evidence confidence, personal overrides of style priors |
-| Color | Cohesive palettes could eliminate every alternative before preference scoring | Soft color score, dominant-color estimate and accessory accents; expressive-color preferences can reduce penalties |
-| Missing | Hypothetical owned-plus-one combinations, preference cutoff, summed preference score | Same full outfit score, quality/taste cutoffs, recolor deduplication and diversity-adjusted value |
-| Controls | Builder implemented its own replacement/refinement ordering | Shared swap candidate validation and temporary scoring objectives |
+This is a deterministic local engine. The optional server only writes evidence-backed profile prose; it does not select clothes. Product styling scores are adjustable heuristics, not calibrated probabilities or a visual vision model.
 
-No layout, typography, imagery, onboarding steps, navigation or CSS changes were needed. Closet editing, Today, Swipe & Learn, My Style, saved outfits and Missing remain in place.
+## Creative pass
 
-## Smallest shared boundary
+`generate(ownedIds, { occasion, profile, requiredId, limit })` sees the whole closet, without weather. `directions.js` defines seven directions: minimal clean, relaxed street, sporty casual, soft feminine, polished casual, edgy and preppy. Occasion priors and observed style/direction preferences order those directions before generation.
 
-`src/engine/wardrobe.js` remains the public facade used by existing pages, storage and the summary server. Pure modules sit behind it:
+Each direction restricts recipe slot pools using style-tag affinity. Specific tags matter; a shared generic “casual” tag cannot connect every aesthetic. Quiet, low-bulk shoes can bridge minimalist and tailored looks. Sparse closets retain their best available alternatives rather than becoming invalid for a subjective style mismatch.
 
-| Module | Responsibility |
-| --- | --- |
-| `data/styling.js` | Volume, structure, texture, length, bulk, layer capacity, exposure, visual weight, formality and color-family defaults |
-| `engine/compatibility.js` | Primary slots, ownership, duplicates, accessory slots and physical layer capacity |
-| `engine/features.js` | Shared observable features and visual-interest intensity |
-| `engine/profile.js` | Learning, confidence, preference scoring and evidence-backed insights |
-| `engine/occasions.js` | All occasion weights, desired interest/formality and temporary refinement changes |
-| `engine/scoring.js` | Numeric silhouette, layering, palette, comfort, interest, occasion and personal scores |
-| `engine/recommendations.js` | Bounded candidate generation, ranking, diversity and locked-piece swaps |
-| `engine/gaps.js` | Hypothetical additions evaluated through the same generator and scorer |
-| `engine/weather.js` | Existing thermal requirements and low/high-day assessment, then shared style ranking |
+Recipes include fitted/cropped + wide, oversized + straight/slim, roomy shell + fitted inner + relaxed leg, structured + relaxed, easy straight, and fluid volume. A bounded exploration recipe preserves less conventional proportions. The recipe selects an anchor (wide bottom, oversized top, structured top or shell) before support selection. Supports are chosen against the direction and palette; shoes are selected against the complete body silhouette, style language, formality and visual weight. There is no Cartesian enumeration of cardigan × coat × scarf stacks.
 
-The pipeline is owned IDs → bounded candidates → physical checks → weather eligibility when present → general/occasion/personal weighted score → quality-bounded diversity → displayed recommendations. No LLM reranker is required or enabled. The existing optional provider continues to receive supported preference labels only.
+Generated records include `aestheticDirection`, `heroItemId`, `outfitArchetype`, `generationFormula`, `generationLayerStructure`, `layerStructure` and `occasion`. The same clothing IDs are deduplicated; the stronger direction interpretation wins. Generation is deterministic, owned-only and capped at 900 results (300 per Missing exploration). This is a representative search, not an exhaustive optimum.
 
-## Metadata and conservative compatibility
+## Fewer, purposeful pieces
 
-Existing `fit` values and 0–5 legacy `warmth` values stay compatible. `formality` is normalized to 1–5; styling volume, exposure, bulk, capacity and visual weight use 1–5. Texture is used for interest, structure for polish/comfort/layering, length for proportion/layering, exposure for coverage and color family for palette relationships. No unused aspirational dimensions were added.
+The default is top + bottom + shoes. Every optional layer/accessory must improve the specific composition, with a small complexity cost and a minimum net improvement of 0.018. The whole outfit is checked again after an addition so a new accessory cannot justify leaving a redundant earlier layer in place.
 
-Construction metadata can have archetype overrides; it does not contain favored named outfit recipes. An oversized hoodie has bulk 5, a close-cut leather jacket capacity 2, and a roomy down coat capacity 5. Each outer layer must accommodate the accumulated inner stack. A thin base contributes little extra bulk beneath a midlayer; substantial inner pieces contribute more.
+`composition` evaluates direction consistency, shoe compatibility, visual weight, focal hierarchy, formula, proportion and palette as one look. Unrelated pieces and competing palettes reduce the complete-look score. `intentionalityScores` performs a leave-one-out comparison and exposes redundant IDs, cohesion, intentionality, direction coherence and shoe compatibility. Quiet outfits can be intentional through silhouette and texture; a brightly colored hero is not required.
 
-The existing single-outer-shell product rule is retained, including fleece jackets and padded vests. Knit midlayers can sit under a coat. Oversized/oversized and fitted/fitted combinations remain valid. Their default silhouette scores are moderate, and repeated positive evidence can raise them above default balanced combinations. No preference can override physical incompatibility.
+An explicitly requested `requiredId` (used for Missing) stays in the hypothetical outfit, but must still pass the same overall quality threshold. Optional finishing-touch suggestions also need a measured improvement; ownership or compatibility alone is not sufficient.
 
-## Scoring and personalization
+## Weather adaptation
 
-`scoreBreakdown(outfit, profile, occasion, { refinement })` returns a 0–1 total, component scores, normalized weights, raw metrics, targets and rule notes. Invalid combinations return `valid: false` and named failures. Every normalized occasion weight lives in `occasions.js`.
+`weatherCandidates(ids, profile, weather, overrides, occasion)` first calls the creative pass. It selects aesthetically stronger seeds across directions and recipes, then adapts them through a bounded beam. Each adapted record retains `styleSeedId` and its direction. Unsuitable bases and shoes are substituted; missing thermal requirements get compatible replacements or additions. Additional insulation is considered only for an actual cold deficit. An extra is removed if its removal does not lose protection or meaningful aesthetic value.
 
-Visual interest is an intensity built from texture, proportion, controlled contrast, focal volume, accessories and layering. Its score measures closeness to the desired intensity; more is not automatically better. Date uses polish, intention, comfort and preference rather than exposure or feminine tags. Work assumes business casual and evaluates ensemble structure, polish, coverage and gym coding. Comfy uses softness, ease and footwear bulk/weight, without a hoodie-only recipe.
+`weatherEssentialIds` recomputes functional necessity from the actual forecast, including edited guides and personal comfort. Required winter pieces are exempt from the redundancy penalty, but not from whole-look style/color evaluation. `rankForWeather` independently checks all final garments and physical validity, including saved looks and swaps. It prioritizes available coverage and avoids materially worse discomfort; comfortable ranges are treated as equivalent rather than optimizing tiny arithmetic warmth differences ahead of aesthetics. Personal/occasion ranking runs on the suitable set.
 
-Love adds broad positive evidence. Specific dislike reasons update only the corresponding feature relationships; color rejection does not penalize garment pairings. “Too basic” raises the desired interest signal, while formality reasons have directional effects. “Just not me” only weakly adjusts that top–bottom pairing. Weights are shrunk toward neutral, so one event does not rewrite the profile.
+Pass the forecast to `weatherCandidates` when asking it to construct weather-adjusted looks. Without a forecast it deliberately returns the creative pass, without forced winter bundles. `rankForWeather` validates supplied looks; it cannot invent missing wardrobe pieces.
 
-Evidence stores weighted count, observation count and confidence. Insights require at least two observations and enough weighted evidence. Redundant palette/silhouette statements are grouped, with specific supported combinations preferred over generic labels. My Style, the five-swipe insight and the optional summary API use this same evidence gate.
+Existing product defaults remain: winter bases cannot be summer tees, no two outer shells, regular puffer defaults to −5…10°C, winter boots strictly below 5°C, seasonal upper temperature limits, per-piece overrides, personal cold/warm offsets, morning protection and afternoon removal. Shortages are described honestly. These thermal guides are product estimates, not individualized physiological measurements.
 
-## Diversity, swap and refinements
+## Ranking, learning and color
 
-Core products are sampled by index rather than fully allocated. The generator caps core samples, layer samples and the returned pool (900 normally, 300 per Missing candidate). A coprime stride avoids repeatedly sampling the same shoe position. Round-robin collection avoids spending the entire cap on one base combination. This is a representative sample, not an exhaustive search or global optimum.
+Centralized occasion weights normalize to one. In addition to silhouette, formula, visual weight, proportion, thermal/style coherence, focal hierarchy, color, layering, comfort, occasion and personal preference, the score now exposes complete-look cohesion, intentionality, direction coherence and shoe compatibility. Occasion has at least a 0.15 budget; personal taste retains its existing budget. Broad feature learning leaves headroom for specific, repeated pairing feedback rather than saturating similar looks at 1.0.
 
-Ranked shortlists vary top, bottom, silhouette, layers and shoes, with recoloring weighted as a small change. Greedy diversity operates among comparable scores within 0.18 of the current best, examining at most 180 candidates for a 24-look diversified prefix. Recent outfits also lower repetition. Physical and weather eligibility remain intact.
+Likes learn direction and garment relationships; explicit dislike reasons update only relevant features. Ambiguous dislikes weakly affect the top–bottom pairing. Defined silhouettes and volume-on-volume can still outrank conventional proportions after repeated positive feedback. Physical incompatibilities remain invalid. Styling priors are not rigid garment bans.
 
-Swap locks every unselected ID and ranks only same-category/same-accessory-slot replacements. Refinement controls temporarily change centralized target/weight parameters. They do not alter learned weights. A new occasion or Style me clears the temporary refinement.
+The palette engine chooses a color strategy before supports and scores hue, temperature, value, saturation, visible area, placement and tonal depth. It has no three-color preference tier or red/burgundy ban. Color relationship preferences are learned from feedback; four intentional colors can beat two incoherent colors. See COLOR_AND_SEASONS.md for the color model and debugging fields.
 
-## Missing value
+Diversity varies silhouette/core items among comparable scores; it does not add items for novelty. Swaps lock all unselected IDs. Refinements adjust temporary scoring targets. Changing a plan regenerates its candidates with the new occasion, then ranks them. Saved outfits and feedback retain direction/hero/archetype metadata; old records infer a direction and require no reset.
 
-For each unowned archetype, temporarily add one color variant (the closet's most represented color, with canonical fallback). Generate valid owned-plus-one outfits that contain that item. Apply the same Everyday score and require:
+Missing continues to count distinct qualifying archetype combinations, not recolors or raw candidate counts. These are sampled estimates, separate from weather shortages. The UI layout and controls are unchanged by this engine revision.
 
-- Quality ≥ the greater of 0.70 and the closet's sampled 65th-percentile quality minus 0.02.
-- Personal score ≥ 0.55 after at least three ratings, otherwise ≥ the neutral 0.50.
+## Validation and inspection
 
-Recolored copies of the same archetype combination count once. Value is `sum(quality × personal score) × diversity`, where diversity is the fraction represented by meaningfully distinct combinations. Thus many near-identical low-relevance options cannot win on raw count alone. The UI uses actual qualifying examples; the counts remain explicitly sampled estimates. This evergreen gap score is separate from Today's missing winter-equipment checklist.
+`npm test` covers construction, colors, temperatures, direction generation, shoe matching, optional-piece removal, learned exceptions, persistence, shortages and opportunity scoring. The two user-reported failures are direct aesthetic regression fixtures:
 
-## Persistence and inspection
+- fitted beige top + black cargo + black sneakers + beige cardigan + black blazer + blue scarf;
+- red knit + blue sweatpants + black puffer + black sneakers + blue scarf.
 
-Storage remains `wearwell:v1`, and clothing IDs are unchanged. Profile version 2 is rebuilt from feedback, so no manual migration/reset is necessary. Known historical feedback is retained even if tighter construction defaults would reject the original outfit today. Owned saved looks are retained for history, while reopening/recommending a physically incompatible look is blocked with an explanation.
+Both are physically valid but receive low default cohesion/intentionality. Perturbed garment/color fixtures exercise the same general behavior. Separate tests verify necessary winter accessories remain and that summer looks do not acquire arbitrary layers.
 
-In a development build, append `?debug=1#outfits` to inspect the current outfit's complete score breakdown. This panel is opt-in and absent from production builds. The pure scoring API is also directly testable in Node. The optional summary provider remains independent of generation and can be left unconfigured.
+In a development build, `?debug=1#outfits` exposes the current numeric breakdown. It is absent from production. Styling still depends on archetype metadata and learned feedback, not visual inspection of each real garment; material and cut differences within an archetype are a known limit.
 
-Validation covers metadata, layering capacity, silhouette priors, learned ranking reversals, reason attribution, evidence gating, all five occasions, soft color scoring, diversity, locked swaps, Missing value, legacy persistence and existing winter/temperature behavior. Product heuristics remain adjustable starting points, not universal fashion rules or calibrated preference probabilities.
+
+## Construction-based layer roles
+
+`data/layers.js` separates display categories from `layerRole`, allowed `layerRoles`, and `outerwearRole`. Construction metadata (intended use, length, bulk, structure and fit/volume) is authoritative. Thin/fitted layering knits are midlayers; regular soft knits may fill mid or light-outer slots; long, bulky, oversized or structured layering pieces occupy the dominant outer slot. Jackets and coats have outer intended use. No item-name or color-pair bans are used.
+
+Generation chooses one of `base`, `base + mid`, `base + outer`, `base + mid + outer` before choosing garments. Each slot has a role-filtered pool. Planned layers still have to earn their place aesthetically; merely supporting a three-layer plan does not make that plan preferable. Accessories cannot introduce unplanned clothing layers.
+
+`assignLayers` resolves an explicit mid/outer relationship and checks cumulative inner bulk against layer capacity, plus the middle piece's softness, volume and hem against the outer garment. One dominant outer is allowed. A long cardigan therefore competes with a bomber, leather jacket or puffer; a thin cardigan may fit under a roomy long coat. Two pieces sharing a Closet category can occupy distinct valid slots. Swaps target effective roles, and weather replaces the occupied outer slot instead of stacking another shell.
+
+The same assignment powers validation/ranking (including old saved candidates), formula recognition, shoe grounding, color occlusion, debug slot IDs and existing flat-lay positions. Closet taxonomy, IDs and temperature guides remain unchanged. These are construction estimates at archetype level, not measurements of individual garments.

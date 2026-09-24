@@ -252,7 +252,7 @@ test("color softly favors neutrals, tonal relationships and a controlled accesso
     "crew-tee:red",
     "trousers:olive",
     "sneakers:blue",
-    "cardigan:burgundy",
+    "cardigan:grey",
     "shoulder-bag:camel",
   );
   assert(palette(accent).neutralAccent);
@@ -412,4 +412,81 @@ test("scores expose finite components and preserve historic feedback through sch
     1,
     "new physical defaults must not erase a user's saved history",
   );
+});
+
+test("neutral colors can repeat while red and green are controlled by visible area", () => {
+  const neutrals = outfit(
+    "knit:beige",
+    "trousers:black",
+    "loafers:black",
+    "scarf:beige",
+  );
+  const redAccent = outfit(
+    "knit:beige",
+    "trousers:black",
+    "loafers:black",
+    "scarf:red",
+  );
+  const greenAccent = outfit(
+    "knit:beige",
+    "trousers:black",
+    "loafers:black",
+    "scarf:olive",
+  );
+  const boldBody = outfit(
+    "knit:red",
+    "trousers:olive",
+    "loafers:black",
+    "scarf:beige",
+  );
+  assert(palette(neutrals).score >= 0.9);
+  assert(palette(redAccent).neutralAccent);
+  assert(palette(greenAccent).neutralAccent);
+  assert(palette(redAccent).score > palette(boldBody).score);
+  assert(palette(greenAccent).score > palette(boldBody).score);
+  assert.equal(
+    rank([boldBody, redAccent], learn([]), "Everyday", { diversity: false })[0]
+      .id,
+    redAccent.id,
+  );
+});
+
+test("the same bold color is an accent on a bag but a statement on a coat", () => {
+  const base = ["long-sleeve:beige", "trousers:black", "loafers:black"];
+  const bag = palette(outfit(...base, "shoulder-bag:red"));
+  const coat = palette(outfit(...base, "wool-coat:red"));
+  const repeated = palette(
+    outfit("long-sleeve:red", "trousers:red", "loafers:black", "wool-coat:red"),
+  );
+  assert(bag.neutralAccent);
+  assert(!coat.neutralAccent);
+  assert(bag.accentShare < coat.accentShare);
+  assert(bag.score > coat.score);
+  // Repetition can form a deliberate tonal statement rather than a banned color overload.
+  assert(repeated.tonal);
+  assert(repeated.cohesive);
+});
+
+test("an accent needs a unified foundation and tiny accessories cannot erase a bold coat", () => {
+  const unified = palette(
+    outfit("knit:beige", "trousers:black", "loafers:black", "shoulder-bag:red"),
+  );
+  const scattered = palette(
+    outfit("knit:beige", "trousers:blue", "loafers:navy", "shoulder-bag:red"),
+  );
+  assert(unified.score > scattered.score);
+  assert(!scattered.neutralAccent);
+  const loaded = palette(
+    outfit(
+      "long-sleeve:black",
+      "trousers:red",
+      "loafers:black",
+      "wool-coat:red",
+      "earrings:black",
+      "belt:black",
+      "sunglasses:black",
+    ),
+  );
+  assert(!loaded.neutralAccent);
+  assert(loaded.accentShare > 0.5);
 });

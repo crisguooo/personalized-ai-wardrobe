@@ -1,178 +1,106 @@
-import { useState } from "react";
-import { Heart, Plus, Sparkles } from "lucide-react";
-import { insights, LABELS, hasEvidence } from "../engine/wardrobe.js";
-import { summarizeStyle } from "../services/ai.js";
-const pct = (n) => Math.round(n * 100);
-export default function Style({ profile, state, onLearn }) {
-  const found = insights(profile),
-    [note, setNote] = useState(""),
-    [status, setStatus] = useState("idle");
-  const dimensions = [
-    ["relaxed", "Silhouette", "Relaxed"],
-    ["neutral", "Palette", "Neutral"],
-    ["layered", "Layers", "Layered"],
-    ["dressy", "Polish", "Dressy"],
-  ];
-  async function getNote() {
-    setStatus("loading");
-    try {
-      const result = await summarizeStyle(profile, AbortSignal.timeout(15000));
-      setNote(result.text);
-      setStatus(result.source);
-    } catch (e) {
-      setNote(e.message);
-      setStatus("error");
-    }
-  }
-  const acceptance = (phase) => {
-    const f = state.feedback.filter((e) => e.phase === phase);
-    return f.length
-      ? `${pct(f.filter((e) => e.rating === "like").length / f.length)}%`
-      : "—";
-  };
+import { useMemo, useState } from "react";
+import { ArrowUpRight, SlidersHorizontal, Shuffle, Heart } from "lucide-react";
+import { brandReferences, BRAND_STYLES } from "../data/brands.js";
+import { insights, LABELS } from "../engine/wardrobe.js";
+import "../style-reference.css";
+export default function Style({ profile, onLearn }) {
+  const [filter, setFilter] = useState("All styles");
+  const [showFilter, setShowFilter] = useState(false);
+  const [index, setIndex] = useState(0);
+  const brands = useMemo(
+    () => brandReferences(profile, filter),
+    [profile, filter],
+  );
+  const brand = brands[index % brands.length];
+  const signals = insights(profile).prefer.slice(0, 5);
   return (
-    <section className="style-page">
-      <div className="page-heading compact">
-        <div>
-          <div className="eyebrow">A PORTRAIT, ALWAYS IN PROGRESS</div>
-          <h1>
-            Your style DNA.
-            <br />
-            <em>Distinctly unfinished.</em>
-          </h1>
-          <p>
-            {profile.ratings} outfits rated. A little more understood with every
-            one.
-          </p>
-        </div>
-        <button className="primary" onClick={onLearn}>
-          Keep discovering
-          <Heart size={17} />
+    <section className="style-reference">
+      <div className="style-reference-heading">
+        <h1>My style.</h1>
+        <button className="text-button" onClick={onLearn}>
+          Keep discovering <Heart size={15} />
         </button>
       </div>
-      <div className="dna-layout">
-        <div className="dna-card">
-          <div className="dna-header">
-            <span>YOUR CURRENT SIGNALS</span>
-            <span>✳</span>
+      <section
+        className="style-section personal-style"
+        aria-labelledby="personal-style-title"
+      >
+        <span className="eyebrow">01 / YOUR PREFERENCES</span>
+        <h2 id="personal-style-title">Your style</h2>
+        {signals.length > 0 ? (
+          <div className="style-reference-tags">
+            {signals.map(([key]) => (
+              <span key={key}>{LABELS[key]}</span>
+            ))}
           </div>
-          {dimensions.map(([key, title, label]) => {
-            const known = hasEvidence(profile, key)
-              ? profile.evidence[key]
-              : null;
-            const weight = profile.weights[key] ?? 0;
-            return (
-              <div className="dna-row" key={key}>
-                <div>
-                  <h3>{title}</h3>
-                  <span>
-                    {known
-                      ? weight < 0
-                        ? `Less ${label.toLowerCase()}`
-                        : label
-                      : "Still exploring"}
-                  </span>
-                </div>
-                <div className="dna-track">
-                  <span
-                    style={{ width: `${known ? (weight + 1) * 50 : 50}%` }}
-                    className={!known ? "unknown" : ""}
-                  />
-                </div>
-                <small>
-                  {known
-                    ? `${Math.round(known.count)} signal${Math.round(known.count) === 1 ? "" : "s"} · ${weight >= 0 ? "+" : ""}${weight.toFixed(2)}`
-                    : profile.evidence[key]
-                      ? "Not enough evidence yet"
-                      : "No evidence yet"}
-                </small>
-              </div>
-            );
-          })}
-          <p>
-            These bars show preference signals, not a fixed identity. The middle
-            is neutral.
-          </p>
-        </div>
-        <div className="style-insights">
-          <span className="eyebrow">THE PATTERNS WE'RE SEEING</span>
-          <h2>
-            No labels.
-            <br />
-            <em>Just your instincts.</em>
-          </h2>
-          {found.prefer.map(([k]) => (
-            <div className="style-insight" key={k}>
-              <Plus size={18} />
-              <div>
-                <h3>{LABELS[k]}</h3>
-                <p>
-                  Positive evidence across{" "}
-                  {Math.ceil(profile.evidence[k].count)} weighted observations.
-                </p>
-              </div>
-            </div>
-          ))}
-          {found.avoid.map(([k]) => (
-            <div className="style-insight" key={k}>
-              <span>−</span>
-              <div>
-                <h3>A little less {LABELS[k].toLowerCase()}</h3>
-                <p>
-                  Your reasons or repeated combinations point away from this.
-                </p>
-              </div>
-            </div>
-          ))}
-          {!found.prefer.length && !found.avoid.length && (
-            <p>
-              Rate a few outfits and this page will tell your story. No preset
-              personality types.
-            </p>
-          )}
+        ) : (
+          <p>Like a few looks to discover your style tags.</p>
+        )}
+      </section>
+      <section
+        className="style-section similar-brands"
+        aria-labelledby="similar-brands-title"
+      >
+        <div className="brand-toolbar">
+          <div>
+            <span className="eyebrow">02 / YOUR STYLE REFERENCES</span>
+            <h2 id="similar-brands-title">Brands like you</h2>
+          </div>
           <button
-            className="text-button"
-            disabled={status === "loading" || !profile.ratings}
-            onClick={getNote}
+            aria-expanded={showFilter}
+            aria-controls="brand-filters"
+            onClick={() => setShowFilter(!showFilter)}
           >
-            {status === "loading" ? "Connecting…" : "Put my style into words"}
-            <Sparkles size={16} />
+            <SlidersHorizontal size={15} /> Filter
           </button>
-          {note && (
-            <p
-              role="status"
-              className={status === "error" ? "api-note error" : "api-note"}
+        </div>
+        {showFilter && (
+          <div
+            id="brand-filters"
+            className="brand-filters"
+            role="group"
+            aria-label="Brand style filters"
+          >
+            {BRAND_STYLES.map((s) => (
+              <button
+                key={s}
+                aria-pressed={filter === s}
+                onClick={() => {
+                  setFilter(s);
+                  setIndex(0);
+                }}
+              >
+                {s}
+              </button>
+            ))}
+          </div>
+        )}
+        <article className="brand-reference" aria-live="polite">
+          <div className="brand-logo-frame">
+            <img
+              key={brand.id}
+              className="brand-logo"
+              src={brand.image}
+              alt={`${brand.name} logo`}
+            />
+          </div>
+          <span className="eyebrow">{brand.styles.join(" / ")}</span>
+          <h3>{brand.name}</h3>
+          <p>{brand.description}</p>
+          <div className="brand-reference-actions">
+            <button
+              className="outline"
+              disabled={brands.length < 2}
+              onClick={() => setIndex((index + 1) % brands.length)}
             >
-              {note}
-            </p>
-          )}
-        </div>
-      </div>
-      <div className="learning-stats">
-        <div>
-          <span>{profile.ratings}</span>
-          <p>first impressions recorded</p>
-        </div>
-        <div>
-          <span>{acceptance("exploration")}</span>
-          <p>loved during exploration</p>
-        </div>
-        <div>
-          <span>{acceptance("personalized")}</span>
-          <p>loved after personalization</p>
-        </div>
-      </div>
-      {import.meta.env.DEV && (
-        <details className="debug">
-          <summary>Behind the preferences</summary>
-          <p>
-            Likes support shared features. Specific reasons update relevant
-            dimensions. Unexplained dislikes mostly affect the top–bottom
-            combination; they never blacklist every garment.
-          </p>
-          <pre>{JSON.stringify(profile, null, 2)}</pre>
-        </details>
-      )}
+              <Shuffle size={15} /> Try another brand
+            </button>
+            <a href={brand.url} target="_blank" rel="noreferrer">
+              Explore brand <ArrowUpRight size={14} />
+            </a>
+          </div>
+        </article>
+      </section>
     </section>
   );
 }

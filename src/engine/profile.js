@@ -30,14 +30,10 @@ export function learn(feedback) {
     const targets = {
       "Too fitted": ["fittedPair", "fitted", "skinny"],
       "Too baggy": ["volume", "relaxed", "wide"],
-      "Color combination": [
-        "monochrome",
-        "tonal",
-        "contrast",
-        "neutralAccent",
-        "multiColor",
-        "earth",
-      ],
+      // Learn the relationship/contrast, not an aversion to a named hue.
+      "Color combination": Object.keys(f).filter(
+        (key) => key.startsWith("color") && key !== "colorful",
+      ),
       "Too feminine": ["feminine"],
       "Too masculine": ["masculine"],
       "Too dressy": ["dressy"],
@@ -53,7 +49,12 @@ export function learn(feedback) {
       if (event.reason === "Too casual") add("dressy", 1.1);
       if (event.reason === "Too dressy") add("casual", 1.1);
     } else {
-      // An ambiguous dislike is weak and local to this pairing.
+      // Ambiguous dislikes provide only weak strategy evidence, never hue aversion.
+      for (const key of Object.keys(f).filter((k) =>
+        k.startsWith("colorStrategy_"),
+      ))
+        add(key, -0.06 * f[key], f[key]);
+      // Keep the stronger signal local to this garment pairing.
       combinations[pairKey(event)] = (combinations[pairKey(event)] ?? 0) - 0.12;
     }
   }
@@ -85,7 +86,9 @@ export function preferenceScore(outfit, profile = learn([])) {
     -0.12,
     0.12,
   );
-  return clamp(0.5 + (sum / Math.max(3, norm)) * 0.78 + specific, 0, 1);
+  // Leave headroom for repeated, specific pair feedback rather than saturating
+  // every vaguely similar look at 1.0.
+  return clamp(0.5 + (sum / Math.max(3, norm)) * 0.48 + specific, 0, 1);
 }
 export function hasEvidence(profile, key) {
   const e = profile.evidence?.[key];
@@ -121,6 +124,19 @@ export function insights(profile) {
       "neutralAccent",
       "tonal",
       "multiColor",
+      "colorWarm",
+      "colorCool",
+      "colorNeutral",
+      "colorMuted",
+      "colorVivid",
+      "colorLowContrast",
+      "colorMediumContrast",
+      "colorHighContrast",
+      "colorSimplePalette",
+      "colorComplexPalette",
+      "colorAccent",
+      "colorTonal",
+      "colorContrast",
     ],
     ["interest", "lowComplexity", "simple"],
     ["dressy", "casual"],

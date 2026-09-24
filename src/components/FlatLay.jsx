@@ -1,3 +1,4 @@
+import { assignLayers } from "../data/layers.js";
 import Garment from "./Garment.jsx";
 import { BY_ID } from "../data/catalog.js";
 export default function FlatLay({
@@ -8,6 +9,10 @@ export default function FlatLay({
   small = false,
 }) {
   if (!outfit) return null;
+  const layers = assignLayers(
+    outfit.itemIds.map((id) => BY_ID[id]).filter(Boolean),
+    outfit.layerStructure,
+  );
   return (
     <div
       className={`flatlay ${small ? "small" : ""} ${outfit.itemIds.length >= 6 ? "many-pieces" : ""}`}
@@ -16,7 +21,13 @@ export default function FlatLay({
       {outfit.itemIds.map((id) => {
         const item = BY_ID[id];
         if (!item) return null;
-        const classes = `flat-item slot-${item.category} ${item.accessorySlot ? `slot-accessory-${item.accessorySlot}` : ""} ${selected === id ? "selected" : ""} ${ghostId === id ? "ghost" : ""}`;
+        const slot =
+          layers.outer?.id === id
+            ? "outerwear"
+            : layers.mid?.id === id
+              ? "midlayer"
+              : item.category;
+        const classes = `flat-item slot-${slot} ${item.accessorySlot ? `slot-accessory-${item.accessorySlot}` : ""} ${selected === id ? "selected" : ""} ${ghostId === id ? "ghost" : ""}`;
         return onSelect ? (
           <button
             className={classes}

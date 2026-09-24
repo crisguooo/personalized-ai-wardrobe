@@ -14,10 +14,7 @@ export default function PaletteNote({ outfit }) {
           />
         ))}
       </span>
-      <span>
-        {info.colors.length} {info.colors.length === 1 ? "color" : "colors"} ·{" "}
-        {info.label}
-      </span>
+      <span>{info.label} </span>
     </div>
   );
 }

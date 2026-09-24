@@ -1,6 +1,5 @@
 import { COLORS } from "../data/catalog.js";
-import { useId } from "react";
-import { EXTRA_SHAPES } from "../data/extraGarments.js";
+
 export function ColorFilters() {
   return (
     <svg
@@ -39,48 +38,13 @@ export function ColorFilters() {
     </svg>
   );
 }
-// A single registry can later resolve per-item transparent PNGs instead of atlas cells.
+// Both atlases use the same 6 x 6 photographic layout and grayscale tinting.
 export const illustrationMap = {
   "wardrobe-atlas": "/assets/wardrobe-atlas.png",
-  "tall-boots": "/assets/tall-boots.svg",
-  scarf: "/assets/scarf.svg",
+  "wardrobe-seasonal-atlas": "/assets/wardrobe-seasonal-atlas.png",
 };
 export default function Garment({ item, className = "" }) {
-  const gradient = useId();
-  if (item.assetKey === "extra-vector")
-    return (
-      <svg
-        role="img"
-        aria-label={`${item.color} ${item.name}`}
-        className={`garment ${className}`}
-        viewBox="0 0 240 240"
-        style={{ background: "none", filter: `url(#tint-${item.color})` }}
-      >
-        <defs>
-          <linearGradient id={gradient}>
-            <stop stopColor="#999" />
-            <stop offset=".48" stopColor="#c3c3c3" />
-            <stop offset="1" stopColor="#858585" />
-          </linearGradient>
-        </defs>
-        <path
-          d={EXTRA_SHAPES[item.key][0]}
-          fill={`url(#${gradient})`}
-          fillRule="evenodd"
-          stroke="#737373"
-          strokeWidth="1.5"
-          strokeLinejoin="round"
-        />
-        <path
-          d={EXTRA_SHAPES[item.key][1]}
-          fill="none"
-          stroke="#666"
-          strokeWidth="1.4"
-          opacity=".65"
-          strokeLinejoin="round"
-        />
-      </svg>
-    );
+  const cell = item.sprite % 36;
   return (
     <span
       role="img"
@@ -88,13 +52,12 @@ export default function Garment({ item, className = "" }) {
       className={`garment ${className}`}
       style={{
         backgroundImage: `url(${illustrationMap[item.assetKey]})`,
-        ...(item.assetKey !== "wardrobe-atlas"
-          ? { backgroundSize: "contain", backgroundRepeat: "no-repeat" }
-          : {}),
-        backgroundPosition:
-          item.assetKey !== "wardrobe-atlas"
-            ? "center"
-            : `${(item.sprite % 6) * 20}% ${Math.floor(item.sprite / 6) * 20}%`,
+        backgroundSize: "600% 600%",
+        backgroundPosition: `${(cell % 6) * 20}% ${Math.floor(cell / 6) * 20}%`,
+        clipPath:
+          item.assetKey === "wardrobe-seasonal-atlas"
+            ? "inset(5% 2% 3% 2%)"
+            : undefined,
         filter: `url(#tint-${item.color})`,
       }}
     />

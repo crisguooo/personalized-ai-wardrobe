@@ -1,0 +1,166 @@
+/* Keep the plan controls and refinements; make only the display a swipe deck. */
+.builder-page .builder-layout {
+  grid-template-columns: minmax(170px, 230px) minmax(0, 1fr);
+  max-width: 1080px;
+  margin: 0 auto;
+}
+.builder-page .builder-controls {
+  grid-column: 1;
+  grid-row: 1;
+}
+.builder-deck-column {
+  grid-column: 2;
+  grid-row: 1;
+  position: relative;
+}
+.builder-deck-column > .refinement-panel {
+  grid-column: 2;
+  grid-row: 2;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  padding-top: 0;
+  margin-top: 16px;
+}
+.builder-deck-column > .refinement-panel > h3,
+.builder-deck-column > .refinement-panel > p,
+.builder-deck-column > .refinement-panel > .eyebrow,
+.builder-deck-column > .refinement-panel > .taste-score,
+.builder-deck-column > .refinement-panel > small {
+  display: none;
+}
+.builder-deck-column > .refinement-panel > button {
+  border: 1px solid var(--line);
+  border-radius: 24px;
+  padding: 12px;
+  gap: 6px;
+  font-size: 12px;
+}
+.deck-card {
+  touch-action: pan-y;
+  mix-blend-mode: multiply;
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  padding: 16px 16px 24px;
+  animation: deck-arrive 0.22s ease-out;
+}
+.builder-page .deck-card .flatlay {
+  max-width: 480px;
+  aspect-ratio: 1 / 1.12;
+}
+.builder-page .deck-card .slot-shoes {
+  top: 61%;
+  left: 6%;
+  width: 35%;
+}
+.builder-page .deck-card .slot-bottom {
+  left: 40%;
+  width: 53%;
+}
+.builder-page .save-button[aria-pressed="true"] {
+  color: var(--red);
+}
+.deck-drag-label {
+  position: absolute;
+  top: 22px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 10px 20px;
+  border-radius: 24px;
+  background: var(--paper);
+  color: var(--red);
+  font-size: 16px;
+  pointer-events: none;
+}
+.deck-votes {
+  position: relative;
+  z-index: 1;
+  border-top: 1px solid var(--line);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 24px 18px;
+  gap: 12px;
+}
+.deck-votes > button {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  border: 1px solid var(--line);
+  border-radius: 30px;
+  min-height: 48px;
+  padding: 12px 20px;
+  background: var(--paper);
+  font-size: 13px;
+}
+.deck-votes > .deck-like {
+  color: var(--red);
+  border-color: #bf422f55;
+}
+.deck-votes > span {
+  font-size: 12px;
+  color: var(--muted);
+}
+.deck-complete {
+  min-height: 330px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  padding: 35px;
+  text-align: center;
+}
+.deck-complete h2 {
+  font-size: 32px;
+}
+.deck-complete p {
+  font-size: 14px;
+  max-width: 330px;
+}
+@keyframes deck-arrive {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@media (max-width: 700px) {
+  .builder-page .builder-layout {
+    grid-template-columns: 1fr;
+  }
+  .builder-page .builder-controls {
+    grid-column: 1;
+    grid-row: 1;
+  }
+  .builder-deck-column {
+    grid-column: 1;
+    grid-row: 2;
+  }
+  .builder-deck-column > .refinement-panel {
+    grid-column: 1;
+    grid-row: 3;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .deck-votes {
+    padding: 8px 14px 16px;
+    gap: 7px;
+  }
+  .deck-votes > button {
+    padding: 11px 14px;
+  }
+  .deck-votes > span {
+    font-size: 10px;
+    max-width: 65px;
+    text-align: center;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .deck-card {
+    animation: none;
+  }
+}

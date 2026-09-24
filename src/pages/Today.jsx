@@ -25,6 +25,7 @@ import {
   guideFor,
 } from "../engine/weather.js";
 import "../weather.css";
+import { finishingTouch } from "../engine/finishing-touch.js";
 
 export default function Today({
   state,
@@ -69,8 +70,9 @@ export default function Today({
     }
   }, [step]);
   const candidates = useMemo(
-    () => weatherCandidates(state.closet),
-    [state.closet],
+    () =>
+      weatherCandidates(state.closet, profile, weather, state.thermalOverrides),
+    [state.closet, profile, weather, state.thermalOverrides],
   );
   const ranked = useMemo(() => {
     const all = rankForWeather(
@@ -82,6 +84,12 @@ export default function Today({
     return all;
   }, [candidates, profile, weather, state.thermalOverrides]);
   const current = ranked[index % Math.max(1, ranked.length)];
+  const finishingSuggestion = finishingTouch(
+    current,
+    state.closet,
+    weather,
+    state.thermalOverrides,
+  );
   function changeUnit(next) {
     setError("");
     const convert = (value) =>
@@ -344,6 +352,11 @@ export default function Today({
                   <p>
                     {weatherReason(current, weather, state.thermalOverrides)}
                   </p>
+                  {finishingSuggestion && (
+                    <p className="optional-finishing-touch">
+                      {finishingSuggestion}
+                    </p>
+                  )}
                 </div>
               </div>
               <div className="today-actions">
@@ -393,8 +406,8 @@ export default function Today({
             </>
           ) : (
             <p>
-              We need a suitable base before building this look. Add the missing
-              pieces above; a warm coat cannot replace a warm long-sleeve base.
+              Let's start with a base and shoes that suit today’s temperature.
+              Add one of the suggested pieces above to build your look.
             </p>
           )}
           <div className="today-finish">
