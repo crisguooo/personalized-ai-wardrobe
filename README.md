@@ -185,6 +185,4 @@ Next, validate whether people actually choose and wear the looks, measure time-t
 
 ## Attribution
 
-[Cher's Closet](https://github.com/hastalasophia/chers-closet), designed and built by **Sophia Liu**, inspired image-led closet browsing and flat-lay interaction. Wearwell is an independent implementation; upstream application code, personal data and styling prompts were not copied.
-
 Garment artwork was created for this prototype. Brand marks identify editorial references and remain their owners' property; source records are in [Brand assets](docs/BRAND_ASSETS.md). See also [Garment assets](docs/GARMENT_ASSETS.md). Third-party packages and fonts retain their respective licenses.
