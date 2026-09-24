@@ -2,6 +2,8 @@
 
 **Less guesswork. More you.**
 
+[Live demo](https://wearwell-demo.vercel.app/) · [Product and engineering notes](docs/STYLING_ENGINE.md)
+
 Wearwell helps people decide what to wear from the clothes they already own. It combines a representative digital closet, personal style feedback and daily temperatures to recommend complete looks—and explains why those pieces work together.
 
 A consumer product prototype built with React, Vite and an explainable, local recommendation engine. No account, paid AI key or garment-photo upload is required for the demo.
@@ -138,7 +140,9 @@ npm run format:check  # source formatting
 
 ## Deploy on Vercel Hobby
 
-Import this repository into an existing **Hobby** workspace. `vercel.json` declares:
+The published demo uses **Drop to Deploy**: the locally tested `dist/` build is uploaded directly to the existing Hobby workspace. This requires no additional GitHub App permissions. It is a static snapshot; pushing to GitHub does **not** automatically redeploy this demo. Rebuild and upload `dist/` to update it.
+
+For a future Git-connected deployment, import this repository into an existing **Hobby** workspace. `vercel.json` declares:
 
 - Framework: Vite
 - Install: `npm ci`
@@ -163,7 +167,7 @@ The deployment serves static assets. Recommendations, preference learning and pe
 | Browser persistence | `src/services/storage.js` |
 | Optional local prose provider | `server/` |
 
-**103 automated tests** cover owned-only deterministic generation, physical roles, intentional styling, color strategies, seasonal constraints, preference changes, swaps, gap quality and storage. Regression fixtures include competing outer layers and visually incoherent multi-piece looks. Tests and production build run during Vercel deployment.
+**103 automated tests** cover owned-only deterministic generation, physical roles, intentional styling, color strategies, seasonal constraints, preference changes, swaps, gap quality and storage. Regression fixtures include competing outer layers and visually incoherent multi-piece looks. The current static snapshot was tested and built locally before upload. The included Vercel configuration also runs tests before building when deployed from Git.
 
 In development, open `?debug=1#outfits` for score components, color strategy, visible-area shares and layer assignments. Diagnostics are excluded from production UI.
 

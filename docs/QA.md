@@ -151,3 +151,13 @@ Manual UI checks and deterministic unit tests; no paid live LLM requests, real u
 - Full suite: 103 passing tests; production build passes; diff whitespace check passes. Existing full-catalog deterministic/bounded/runtime tests pass. No existing test assertions were relaxed for this change.
 - Closet display categories and garment IDs remain stable. The flat lay uses its existing positions according to assigned roles, preventing a thin cardigan and long cardigan from sharing one midlayer position. No CSS redesign.
 - Browser verification: the main local dev service had stopped and its tab retained an old rendered page. Restarted the existing project on port 5173 and opened a fresh Today preview with the existing 14–16°C wardrobe. Latest strategy caption and outfit render normally; no captured console errors. No test closet edits, ratings or temperature changes were made.
+
+
+## 2026-09-24 — GitHub release and free public demo
+
+- README rewritten around user problems, product approach, business hypotheses and measurement, recommendation architecture, tradeoffs and deployment instructions. No unmeasured growth/revenue results are presented as facts.
+- Full suite: 103 tests pass; production build passes. Vercel Git build configuration is included for optional future integration; Node 22 is specified for hosted builds.
+- Latest application code pushed to the existing GitHub main branch in commit `af16f9f`.
+- Published static `dist/` snapshot through Vercel Drop to Deploy in the existing **cg / Hobby** workspace as `wearwell-demo`. Production alias: https://wearwell-demo.vercel.app/ ; immutable deployment: https://wearwell-demo-kvlmtzo80-cg-cf62.vercel.app/ . No Pro/trial upgrade, payment details, model keys, database or paid integration was added.
+- Verified public access in the in-app browser without Vercel login: welcome page, Build my closet transition, seasonal clothing imagery and Back navigation. No captured browser errors. This is an online smoke test; full engine regression coverage is automated locally.
+- Deployment is a manual static snapshot and is not Git-connected. Future Git pushes do not redeploy automatically. Browser-local closet/feedback storage remains separate from localhost.
