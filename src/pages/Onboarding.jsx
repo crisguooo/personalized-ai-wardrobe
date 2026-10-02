@@ -18,6 +18,7 @@ export default function Onboarding({
   setState,
   onComplete,
   storageError,
+  onDemo,
 }) {
   const { t } = useLanguage();
   const draft = normalizeOnboarding(state.onboarding);
@@ -379,9 +380,14 @@ export default function Onboarding({
             </button>
           )}
           {draft.step === "welcome" && (
-            <span className="setup-footnote">
-              {t("A few favorites are enough. Add more whenever.")}
-            </span>
+            <>
+              <button className="setup-secondary" onClick={onDemo}>
+                {t("Try demo with 100 random pieces")}
+              </button>
+              <span className="setup-footnote">
+                {t("A few favorites are enough. Add more whenever.")}
+              </span>
+            </>
           )}
         </div>
       </footer>

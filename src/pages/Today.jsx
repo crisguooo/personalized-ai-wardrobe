@@ -73,8 +73,15 @@ export default function Today({
   }, [step]);
   const candidates = useMemo(
     () =>
-      weatherCandidates(state.closet, profile, weather, state.thermalOverrides),
-    [state.closet, profile, weather, state.thermalOverrides],
+      step === "look"
+        ? weatherCandidates(
+            state.closet,
+            profile,
+            weather,
+            state.thermalOverrides,
+          )
+        : [],
+    [state.closet, profile, weather, state.thermalOverrides, step],
   );
   const ranked = useMemo(() => {
     const all = rankForWeather(

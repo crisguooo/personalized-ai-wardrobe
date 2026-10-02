@@ -1,7 +1,8 @@
 import { useLanguage, LanguageSwitcher } from "./i18n/Language.jsx";
 import { useEffect, useMemo, useState } from "react";
 import { Check } from "lucide-react";
-import { BY_ID, STARTER_IDS } from "./data/catalog.js";
+import { BY_ID } from "./data/catalog.js";
+import { sampleDemoCloset } from "./engine/demo-closet.js";
 import { learn, validity } from "./engine/wardrobe.js";
 import { weatherCandidates, today } from "./engine/weather.js";
 import { createStorage, freshState } from "./services/storage.js";
@@ -64,13 +65,22 @@ export default function App() {
   const owned = state.closet.map((id) => BY_ID[id]);
   const candidates = useMemo(
     () =>
-      weatherCandidates(
-        state.closet,
-        profile,
-        state.weather?.date === today() ? state.weather : undefined,
-        state.thermalOverrides,
-      ),
-    [state.closet, profile, state.weather, state.thermalOverrides],
+      state.onboarded && page === "swipe"
+        ? weatherCandidates(
+            state.closet,
+            profile,
+            state.weather?.date === today() ? state.weather : undefined,
+            state.thermalOverrides,
+          )
+        : [],
+    [
+      state.closet,
+      profile,
+      state.weather,
+      state.thermalOverrides,
+      state.onboarded,
+      page,
+    ],
   );
   const ready = ["top", "bottom", "shoes"].every((category) =>
     owned.some((i) => i.category === category),
@@ -104,6 +114,17 @@ export default function App() {
       );
     });
   };
+  const addDemoClothes = (advance = false) => {
+    const addedIds = sampleDemoCloset(state.closet);
+    setState((s) => {
+      const closet = [...new Set([...s.closet, ...addedIds])];
+      if (closet.length === s.closet.length && !advance) return s;
+      return appendEvents(
+        { ...s, closet, setupPhase: advance ? "weather" : s.setupPhase },
+        event("demo_closet_loaded", { added: closet.length - s.closet.length }),
+      );
+    });
+  };
   if (!state.onboarded) {
     return (
       <>
@@ -115,6 +136,7 @@ export default function App() {
           <main>
             <Closet
               {...{ state, owned, toggle, ready }}
+              onAddDemo={() => addDemoClothes()}
               start={() => setState((s) => ({ ...s, setupPhase: "weather" }))}
             />
           </main>
@@ -128,6 +150,7 @@ export default function App() {
         ) : (
           <Onboarding
             {...{ state, setState, storageError }}
+            onDemo={() => addDemoClothes(true)}
             onComplete={() =>
               setState((s) => ({ ...s, setupPhase: "weather" }))
             }
@@ -191,19 +214,7 @@ export default function App() {
           <Closet
             {...{ state, owned, toggle, ready }}
             start={() => navigate("today")}
-            onStarter={() => {
-              setState((s) => {
-                const closet = [...new Set([...s.closet, ...STARTER_IDS])];
-                return appendEvents(
-                  { ...s, closet },
-                  ...STARTER_IDS.filter((id) => !s.closet.includes(id)).map(
-                    (id) =>
-                      event("closet_item_added", { id, source: "starter" }),
-                  ),
-                );
-              });
-              setNotice("18 everyday pieces added. Make them yours.");
-            }}
+            onAddDemo={() => addDemoClothes()}
           />
         )}
         {page === "swipe" &&

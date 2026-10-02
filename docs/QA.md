@@ -1,5 +1,13 @@
 # MVP verification
 
+## 2026-10-02 — One-click random demo wardrobe
+
+- Closet adds 100 random unowned variants in one state update, preserving existing items, ratings, saved looks and comfort preferences. Sampling covers available archetypes first (including summer and winter garments, shoes and accessories), balances color coverage, then fills the remainder. The button shows a smaller count near catalog exhaustion and disables when complete. A local bulk event records the added count. Both languages are supported.
+- Welcome has a secondary 100-piece demo entry that goes directly to temperature setup without requiring manual garment selection.
+- Full-catalog browser testing exposed excessive background weather work. Closet no longer runs the unused Swipe candidate generator; Today waits until the result step. Weather adaptation bounds its fit cache and, for large pools, considers two colors per archetype/temperature-guide group nearest each styled seed. Every archetype and distinct personal guide remains available; all variants remain owned and individually selectable.
+- Sampling tests cover 20 seeds, all 72 archetypes and 14 colors, unique 100-piece batches, preserved ownership, changing samples, and 99/1/0 remaining items. Large-closet regression covers all catalog variants at 9–17°C, -4–2°C and 28–32°C, with valid bounded results and unchanged ownership. Full suite: 114 tests pass; production build passes.
+- Browser QA on the separate localhost:5174 origin: welcome demo shortcut reached temperature input; Back showed exactly 100 owned rows; Closet button grew this to 200; English/Chinese labels switched correctly; refresh retained 200 items. No captured console errors. GitHub source update only; Vercel remains a separately published snapshot.
+
 ## 2026-10-02 — English / Simplified Chinese
 
 - Added a top-right EN / 中文 control to setup and the normal product header. First visits follow browser language; explicit choices persist in a separate `wearwell:language` key. Existing wardrobe data and engine identifiers are unchanged.

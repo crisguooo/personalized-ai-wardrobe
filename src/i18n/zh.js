@@ -1,6 +1,11 @@
 // English copy remains the stable message key. IDs, ratings and catalog data
 // are never translated; only their presentation is localized.
 export const messages = {
+  "Add {0} random demo pieces": "随机添加 {0} 件衣物",
+  "All clothes added": "全部衣物已添加",
+  "All seasons · Varied colors · Clothes & accessories":
+    "四季衣物与配饰 · 多种颜色",
+  "Try demo with 100 random pieces": "随机加入 100 件，试用 Demo",
   "I want a big coat at or below (°{0})":
     "低于或等于这个温度时，我想穿厚外套（°{0}）",
   "For example, {0} if mild days still feel cold.":

@@ -15,6 +15,24 @@
   overflow: hidden;
   background: #fdfbf6;
 }
+.closet-demo-tools {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px 18px;
+  margin: -8px 0 22px;
+}
+.closet-demo-tools .outline {
+  min-height: 44px;
+  padding: 10px 16px;
+  border-radius: 24px;
+  font-size: 13px;
+}
+.closet-demo-tools .outline:disabled {
+  opacity: 1;
+  color: #566344;
+  background: #e5e8dc;
+}
 .clothes-column {
   min-width: 0;
 }

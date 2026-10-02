@@ -18,6 +18,8 @@ UI copy, all 72 garment names, 14 colors, style tags, brand descriptions, weathe
 
 Translation sources are in `src/i18n/`. Add copy to `zh.js` and render it through `useLanguage().t`; use numbered placeholders for sentences with dynamic values so word order can differ. The localization tests cover copy coverage, dynamic explanations, locale persistence and wardrobe-data preservation. The public demo is a manually uploaded snapshot; a GitHub push alone does not update its deployed version.
 
+For a quick demo, choose **Try demo with 100 random pieces** on the welcome screen or **Add 100 random demo pieces** in Closet. Each click samples 100 unowned items, covering seasonal garment types, shoes, accessories and varied colors. Existing items, ratings and saved looks stay intact. First-time visitors go directly to temperature setup. If fewer than 100 catalog items remain, the button shows and adds only that remainder; it disables when everything is owned.
+
 ## The problem
 
 Having a full wardrobe does not make getting dressed easy. People still need to answer three questions:
@@ -177,7 +179,7 @@ The deployment serves static assets. Recommendations, preference learning and pe
 | Browser persistence | `src/services/storage.js` |
 | Optional local prose provider | `server/` |
 
-**110 automated tests** cover owned-only deterministic generation, physical roles, intentional styling, color strategies, seasonal constraints, preference changes, swaps, gap quality, storage and bilingual presentation. Regression fixtures include competing outer layers and visually incoherent multi-piece looks. Localization checks cover all catalog labels, weather explanations, language persistence and unchanged wardrobe data. The included Vercel configuration also runs tests before building when deployed from Git.
+**114 automated tests** cover owned-only deterministic generation, physical roles, intentional styling, color strategies, seasonal constraints, preference changes, swaps, gap quality, storage and bilingual presentation. Demo sampling checks diversity, randomness, duplicate avoidance and catalog exhaustion. Regression fixtures include competing outer layers, visually incoherent multi-piece looks and full-catalog weather recommendations. Localization checks cover all catalog labels, weather explanations, language persistence and unchanged wardrobe data. The included Vercel configuration also runs tests before building when deployed from Git.
 
 In development, open `?debug=1#outfits` for score components, color strategy, visible-area shares and layer assignments. Diagnostics are excluded from production UI.
 

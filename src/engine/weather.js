@@ -456,10 +456,12 @@ export function weatherCandidates(
   // First design complete looks using occasion and taste, with no weather input.
   const drafts = generate(ids, { profile, occasion });
   if (!validRange(weather?.lowC, weather?.highC)) return drafts;
-  const pool = weatherPool(ids, weather, overrides).map((id) => BY_ID[id]);
+  const eligiblePool = weatherPool(ids, weather, overrides).map(
+    (id) => BY_ID[id],
+  );
   if (
     ["top", "bottom", "shoes"].some(
-      (category) => !pool.some((i) => i.category === category),
+      (category) => !eligiblePool.some((i) => i.category === category),
     )
   )
     return [];
@@ -471,7 +473,10 @@ export function weatherCandidates(
   const valid = (o) => !validity(o, ids).length;
   const fits = new Map();
   const fit = (o) => {
-    if (!fits.has(o.id)) fits.set(o.id, weatherFit(o, weather, overrides));
+    if (!fits.has(o.id)) {
+      if (fits.size >= 2048) fits.clear();
+      fits.set(o.id, weatherFit(o, weather, overrides));
+    }
     return fits.get(o.id);
   };
   const choose = (looks, count = 2) =>
@@ -509,6 +514,50 @@ export function weatherCandidates(
       if (lane[n] && seeds.length < 160) seeds.push(lane[n]);
   const output = new Map();
   for (const seed of seeds) {
+    // Full-demo closets contain every color variant. Weather adaptation needs
+    // construction diversity, not fourteen copies of each thermal equivalent.
+    // Keep every archetype and distinct personal temperature guide, choosing
+    // colors nearest this already-styled seed. Other seeds explore other palettes.
+    let pool = eligiblePool;
+    if (eligiblePool.length > 144) {
+      const anchors = seed.itemIds.map((id) => BY_ID[id]);
+      const colorDistance = (item) =>
+        Math.min(
+          ...anchors.map((anchor) => {
+            const a = item.colorSpec,
+              b = anchor.colorSpec;
+            const hue =
+              a.hue == null || b.hue == null
+                ? 0
+                : Math.min(
+                    Math.abs(a.hue - b.hue),
+                    360 - Math.abs(a.hue - b.hue),
+                  ) / 180;
+            return (
+              hue +
+              Math.abs(a.value - b.value) +
+              Math.abs(a.saturation - b.saturation)
+            );
+          }),
+        );
+      const variants = new Map();
+      for (const item of eligiblePool) {
+        const guide = guideFor(item, overrides);
+        const key = `${item.archetype}:${guide.minC}:${guide.maxC}`;
+        if (!variants.has(key)) variants.set(key, []);
+        variants.get(key).push(item);
+      }
+      pool = [...variants.values()].flatMap((items) =>
+        items
+          .map((item) => ({ item, distance: colorDistance(item) }))
+          .sort(
+            (a, b) =>
+              a.distance - b.distance || a.item.id.localeCompare(b.item.id),
+          )
+          .slice(0, 2)
+          .map(({ item }) => item),
+      );
+    }
     const itemIds = seed.itemIds.filter(
       (id) =>
         !optionalCategory(BY_ID[id]) ||
