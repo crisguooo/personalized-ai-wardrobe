@@ -1,52 +1,56 @@
+import { useLanguage } from "../i18n/Language.jsx";
 import { Plus, Sparkles } from "lucide-react";
 import { insights, LABELS } from "../engine/wardrobe.js";
 export default function InsightMoment({ profile, onContinue }) {
+  const { t } = useLanguage();
   const found = insights(profile);
   return (
     <section className="insight-moment">
       <div className="insight-star">✳</div>
-      <div className="eyebrow">FIVE CHOICES. A FEW CONNECTIONS.</div>
+      <div className="eyebrow">{t("FIVE CHOICES. A FEW CONNECTIONS.")}</div>
       <h1>
-        We learned something
+        {t("We learned something")}
         <br />
-        <em>about you.</em>
+        <em>{t("about you.")}</em>
       </h1>
       <p>
-        Your first {profile.ratings} ratings are beginning to paint a picture.
+        {t("Your first ")}
+        {t(profile.ratings)}
+        {t(" ratings are beginning to paint a picture.")}
       </p>
       <div className="insight-columns">
         <div>
-          <span className="eyebrow">YOU SEEM TO LEAN TOWARD</span>
+          <span className="eyebrow">{t("YOU SEEM TO LEAN TOWARD")}</span>
           {found.prefer.length ? (
             found.prefer.map(([k]) => (
               <h3 key={k}>
                 <Plus size={17} />
-                {LABELS[k]}
+                {t(LABELS[k])}
               </h3>
             ))
           ) : (
-            <p>We're still looking for a consistent positive signal.</p>
+            <p>{t("We're still looking for a consistent positive signal.")}</p>
           )}
         </div>
         <div>
-          <span className="eyebrow">MAYBE A LITTLE LESS OF</span>
+          <span className="eyebrow">{t("MAYBE A LITTLE LESS OF")}</span>
           {found.avoid.length ? (
             found.avoid.map(([k]) => (
               <h3 key={k}>
                 <span>−</span>
-                {LABELS[k]}
+                {t(LABELS[k])}
               </h3>
             ))
           ) : (
-            <p>No clear dislikes yet. We won't invent any.</p>
+            <p>{t("No clear dislikes yet. We won't invent any.")}</p>
           )}
         </div>
       </div>
       <p className="subtle">
-        Early signals, never a box to fit into. Your style can change.
+        {t("Early signals, never a box to fit into. Your style can change.")}
       </p>
       <button className="primary" onClick={onContinue}>
-        Show me better outfits
+        {t("Show me better outfits")}
         <Sparkles size={18} />
       </button>
     </section>

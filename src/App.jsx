@@ -1,3 +1,4 @@
+import { useLanguage, LanguageSwitcher } from "./i18n/Language.jsx";
 import { useEffect, useMemo, useState } from "react";
 import { Check } from "lucide-react";
 import { BY_ID, STARTER_IDS } from "./data/catalog.js";
@@ -32,6 +33,7 @@ const urlPage = () => {
     : "today";
 };
 export default function App() {
+  const { t } = useLanguage();
   const [loaded] = useState(() => adapter.load());
   const [state, setState] = useState(loaded.state);
   const [storageError, setStorageError] = useState(loaded.error);
@@ -106,6 +108,9 @@ export default function App() {
     return (
       <>
         <ColorFilters />
+        <div className="onboarding-language">
+          <LanguageSwitcher />
+        </div>
         {state.setupPhase === "edit" ? (
           <main>
             <Closet
@@ -135,10 +140,10 @@ export default function App() {
     <>
       <ColorFilters />
       <header className="header">
-        <a className="wordmark" href="#closet" aria-label="Wearwell home">
+        <a className="wordmark" href="#closet" aria-label={t("Wearwell home")}>
           wearwell<span>✳</span>
         </a>
-        <nav aria-label="Main navigation">
+        <nav aria-label={t("Main navigation")}>
           {navigation.map(([key, label]) => (
             <button
               key={key}
@@ -146,27 +151,32 @@ export default function App() {
               onClick={() => navigate(key)}
               aria-current={page === key ? "page" : undefined}
             >
-              {label}
+              {t(label)}
               {key === "missing" && <span className="nav-dot" />}
             </button>
           ))}
         </nav>
-        <button className="taste-status" onClick={() => navigate("style")}>
-          <span className="avatar">Y</span>
-          <span>
-            Your wardrobe,
-            <br />
-            <b>
-              {state.feedback.length
-                ? "getting to know you"
-                : "a little more you"}
-            </b>
-          </span>
-        </button>
+        <div className="header-actions">
+          <button className="taste-status" onClick={() => navigate("style")}>
+            <span className="avatar">Y</span>
+            <span>
+              {t("Your wardrobe,")}
+              <br />
+              <b>
+                {t(
+                  state.feedback.length
+                    ? "getting to know you"
+                    : "a little more you",
+                )}
+              </b>
+            </span>
+          </button>
+          <LanguageSwitcher />
+        </div>
       </header>
       {storageError && (
         <div className="error-banner" role="alert">
-          {storageError}
+          {t(storageError)}
         </div>
       )}
       <main>
@@ -204,7 +214,7 @@ export default function App() {
             />
           ) : (
             <Empty
-              title="A few pieces make a world of outfits."
+              title={t("A few pieces make a world of outfits.")}
               text="Add at least one top, bottom and pair of shoes to start learning your taste."
               action="Build my closet"
               onClick={() => navigate("closet")}
@@ -220,7 +230,7 @@ export default function App() {
             />
           ) : (
             <Empty
-              title="Let's give your style a starting point."
+              title={t("Let's give your style a starting point.")}
               text="Add a top, a bottom and shoes to your closet. Then we can put them together."
               action="Build my closet"
               onClick={() => navigate("closet")}
@@ -237,7 +247,9 @@ export default function App() {
               onClick={() => {
                 if (
                   window.confirm(
-                    "Start fresh? This clears the closet, ratings and saved looks in this browser.",
+                    t(
+                      "Start fresh? This clears the closet, ratings and saved looks in this browser.",
+                    ),
                   )
                 ) {
                   setState(freshState());
@@ -248,7 +260,7 @@ export default function App() {
                 }
               }}
             >
-              Start a fresh demo
+              {t("Start a fresh demo")}
             </button>
           </>
         )}
@@ -270,7 +282,7 @@ export default function App() {
             />
           ) : (
             <Empty
-              title="First, the pieces you already love."
+              title={t("First, the pieces you already love.")}
               text="Build a small closet so we can find what would make it go further."
               action="Build my closet"
               onClick={() => navigate("closet")}
@@ -278,16 +290,17 @@ export default function App() {
           ))}
       </main>
       <footer className="site-footer">
-        <span>LESS GUESSWORK. MORE YOU.</span>
+        <span>{t("LESS GUESSWORK. MORE YOU.")}</span>
         <span>
-          Your closet stays in this browser.{" "}
+          {t("Your closet stays in this browser.")}
+          {t(" ")}
           <span className="tiny-star">✳</span>
         </span>
       </footer>
       {notice && (
         <div className="toast" role="status">
           <Check size={17} />
-          {notice}
+          {t(notice)}
         </div>
       )}
     </>

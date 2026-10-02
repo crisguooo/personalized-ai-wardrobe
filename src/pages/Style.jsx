@@ -1,9 +1,11 @@
+import { useLanguage } from "../i18n/Language.jsx";
 import { useMemo, useState } from "react";
 import { ArrowUpRight, SlidersHorizontal, Shuffle, Heart } from "lucide-react";
 import { brandReferences, BRAND_STYLES } from "../data/brands.js";
 import { insights, LABELS } from "../engine/wardrobe.js";
 import "../style-reference.css";
 export default function Style({ profile, onLearn }) {
+  const { t } = useLanguage();
   const [filter, setFilter] = useState("All styles");
   const [showFilter, setShowFilter] = useState(false);
   const [index, setIndex] = useState(0);
@@ -16,25 +18,26 @@ export default function Style({ profile, onLearn }) {
   return (
     <section className="style-reference">
       <div className="style-reference-heading">
-        <h1>My style.</h1>
+        <h1>{t("My style.")}</h1>
         <button className="text-button" onClick={onLearn}>
-          Keep discovering <Heart size={15} />
+          {t("Keep discovering ")}
+          <Heart size={15} />
         </button>
       </div>
       <section
         className="style-section personal-style"
         aria-labelledby="personal-style-title"
       >
-        <span className="eyebrow">01 / YOUR PREFERENCES</span>
-        <h2 id="personal-style-title">Your style</h2>
+        <span className="eyebrow">{t("01 / YOUR PREFERENCES")}</span>
+        <h2 id="personal-style-title">{t("Your style")}</h2>
         {signals.length > 0 ? (
           <div className="style-reference-tags">
             {signals.map(([key]) => (
-              <span key={key}>{LABELS[key]}</span>
+              <span key={key}>{t(LABELS[key])}</span>
             ))}
           </div>
         ) : (
-          <p>Like a few looks to discover your style tags.</p>
+          <p>{t("Like a few looks to discover your style tags.")}</p>
         )}
       </section>
       <section
@@ -43,15 +46,16 @@ export default function Style({ profile, onLearn }) {
       >
         <div className="brand-toolbar">
           <div>
-            <span className="eyebrow">02 / YOUR STYLE REFERENCES</span>
-            <h2 id="similar-brands-title">Brands like you</h2>
+            <span className="eyebrow">{t("02 / YOUR STYLE REFERENCES")}</span>
+            <h2 id="similar-brands-title">{t("Brands like you")}</h2>
           </div>
           <button
             aria-expanded={showFilter}
             aria-controls="brand-filters"
             onClick={() => setShowFilter(!showFilter)}
           >
-            <SlidersHorizontal size={15} /> Filter
+            <SlidersHorizontal size={15} />
+            {t(" Filter")}
           </button>
         </div>
         {showFilter && (
@@ -59,7 +63,7 @@ export default function Style({ profile, onLearn }) {
             id="brand-filters"
             className="brand-filters"
             role="group"
-            aria-label="Brand style filters"
+            aria-label={t("Brand style filters")}
           >
             {BRAND_STYLES.map((s) => (
               <button
@@ -70,7 +74,7 @@ export default function Style({ profile, onLearn }) {
                   setIndex(0);
                 }}
               >
-                {s}
+                {t(s)}
               </button>
             ))}
           </div>
@@ -81,22 +85,24 @@ export default function Style({ profile, onLearn }) {
               key={brand.id}
               className="brand-logo"
               src={brand.image}
-              alt={`${brand.name} logo`}
+              alt={t(`${brand.name} logo`)}
             />
           </div>
-          <span className="eyebrow">{brand.styles.join(" / ")}</span>
-          <h3>{brand.name}</h3>
-          <p>{brand.description}</p>
+          <span className="eyebrow">{t(brand.styles.join(" / "))}</span>
+          <h3>{t(brand.name)}</h3>
+          <p>{t(brand.description)}</p>
           <div className="brand-reference-actions">
             <button
               className="outline"
               disabled={brands.length < 2}
               onClick={() => setIndex((index + 1) % brands.length)}
             >
-              <Shuffle size={15} /> Try another brand
+              <Shuffle size={15} />
+              {t(" Try another brand")}
             </button>
             <a href={brand.url} target="_blank" rel="noreferrer">
-              Explore brand <ArrowUpRight size={14} />
+              {t("Explore brand ")}
+              <ArrowUpRight size={14} />
             </a>
           </div>
         </article>

@@ -658,17 +658,43 @@ export function rankForWeather(
   // Never trade away temperature suitability just to obtain a nicer palette.
   return rank(suitable, profile, occasion, options);
 }
-export function weatherReason(outfit, weather, overrides = {}) {
+// Optional presentation formatter; recommendation scores and stored IDs stay
+// language-independent. Existing callers keep the original English behavior.
+export function weatherReason(
+  outfit,
+  weather,
+  overrides = {},
+  text = (message, values = []) =>
+    message.replace(/\{(\d+)\}/g, (_, i) => values[i]),
+) {
   if (!outfit) return "";
   const fit = weatherFit(outfit, weather, overrides);
   const names = (ids) =>
-    ids.map((id) => BY_ID[id].name.toLowerCase()).join(" + ");
+    ids.map((id) => text(BY_ID[id].name.toLowerCase())).join(" + ");
   if (fit.missing.length)
-    return `You may feel cold at ${temperature(weather.lowC, weather.unit)}. For more warmth, add ${fit.missing.map((r) => r.label.toLowerCase()).join(", ")}.`;
+    return text("You may feel cold at {0}. For more warmth, add {1}.", [
+      temperature(weather.lowC, weather.unit),
+      text(fit.missing.map((r) => r.label.toLowerCase()).join(", ")),
+    ]);
   if (fit.coldGap > 2)
-    return `You may still feel cold at ${temperature(weather.lowC, weather.unit)} in these layers. ${assignLayers(outfit.itemIds.map((id) => BY_ID[id])).mid ? "More insulating versions of your coat or base layers would help." : "An insulating midlayer would help retain more warmth."}`;
+    return text("You may still feel cold at {0} in these layers. {1}", [
+      temperature(weather.lowC, weather.unit),
+      text(
+        assignLayers(outfit.itemIds.map((id) => BY_ID[id])).mid
+          ? "More insulating versions of your coat or base layers would help."
+          : "An insulating midlayer would help retain more warmth.",
+      ),
+    ]);
   if (fit.hotGap > 3)
-    return `These pieces cover the required areas, but may feel too warm at ${temperature(fit.afternoonHotGap > 3 ? weather.highC : weather.lowC, weather.unit)}; a lighter base or lighter bottoms would help.`;
+    return text(
+      "These pieces cover the required areas, but may feel too warm at {0}; a lighter base or lighter bottoms would help.",
+      [
+        temperature(
+          fit.afternoonHotGap > 3 ? weather.highC : weather.lowC,
+          weather.unit,
+        ),
+      ],
+    );
   const top = outfit.itemIds.find((id) => BY_ID[id].category === "top");
   const kept = outfit.itemIds.filter(
     (id) =>
@@ -680,15 +706,32 @@ export function weatherReason(outfit, weather, overrides = {}) {
   );
   const personal =
     weather.comfort === "custom"
-      ? `You prefer a big coat at or below ${temperature(weather.coatBelowC, weather.unit)}, so `
+      ? text("You prefer a big coat at or below {0}, so ", [
+          temperature(weather.coatBelowC, weather.unit),
+        ])
       : weather.comfort === "cold"
-        ? "Since you feel cold easily, "
+        ? text("Since you feel cold easily, ")
         : weather.comfort === "warm"
-          ? "Since you run warm, "
-          : "For today, ";
+          ? text("Since you run warm, ")
+          : text("For today, ");
   const bottom = outfit.itemIds.find((id) => BY_ID[id].category === "bottom");
   const afternoon = fit.remove.length
-    ? `remove ${names(fit.remove)} at ${temperature(weather.highC, weather.unit)} and keep ${names(kept)}`
-    : `keep the same layers through the ${temperature(weather.highC, weather.unit)} high`;
-  return `${personal}${names([top, ...layers])} with ${names([bottom])} handles the ${temperature(weather.lowC, weather.unit)} low; ${afternoon}${fit.vent.length ? `, opening the ${names(fit.vent)} for ventilation` : ""}.`;
+    ? text("remove {0} at {1} and keep {2}", [
+        names(fit.remove),
+        temperature(weather.highC, weather.unit),
+        names(kept),
+      ])
+    : text("keep the same layers through the {0} high", [
+        temperature(weather.highC, weather.unit),
+      ]);
+  return text("{0}{1} with {2} handles the {3} low; {4}{5}.", [
+    personal,
+    names([top, ...layers]),
+    names([bottom]),
+    temperature(weather.lowC, weather.unit),
+    afternoon,
+    fit.vent.length
+      ? text(", opening the {0} for ventilation", [names(fit.vent)])
+      : "",
+  ]);
 }

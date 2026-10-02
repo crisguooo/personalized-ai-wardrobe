@@ -1,3 +1,4 @@
+import { useLanguage } from "../i18n/Language.jsx";
 import { useState, useEffect, useRef, useMemo } from "react";
 import { X, Heart, ArrowRight, ArrowUpRight } from "lucide-react";
 import {
@@ -28,6 +29,7 @@ export default function Swipe({
   track,
   onBuilder,
 }) {
+  const { t } = useLanguage();
   const [pending, setPending] = useState(false),
     [leaving, setLeaving] = useState(""),
     [drag, setDrag] = useState(0);
@@ -127,11 +129,11 @@ export default function Swipe({
   if (!current)
     return (
       <Empty
-        title={
+        title={t(
           hasWeather && !queue.length
             ? "A warmer base comes first."
-            : "A little more understood."
-        }
+            : "A little more understood.",
+        )}
         text={
           hasWeather && !queue.length
             ? "Your closet needs a suitable long-sleeve base for today. Review the missing pieces in your outfit studio."
@@ -146,39 +148,47 @@ export default function Swipe({
     <section className="swipe-page">
       <div className="swipe-heading">
         <div className="eyebrow">
-          {state.learned ? "MADE MORE YOU" : "02 · A LITTLE STYLE INSTINCT"}
+          {t(state.learned ? "MADE MORE YOU" : "02 · A LITTLE STYLE INSTINCT")}
         </div>
         <h1>
           {state.learned ? (
             <>
-              Now we're <em>getting you.</em>
+              {t("Now we're ")}
+              <em>{t("getting you.")}</em>
             </>
           ) : (
             <>
-              Would you <em>wear this?</em>
+              {t("Would you ")}
+              <em>{t("wear this?")}</em>
             </>
           )}
         </h1>
         <p>
-          {state.learned
-            ? "New combinations, ranked by your actual ratings."
-            : "Go with your gut. Every choice helps us connect the dots."}
+          {t(
+            state.learned
+              ? "New combinations, ranked by your actual ratings."
+              : "Go with your gut. Every choice helps us connect the dots.",
+          )}
         </p>
       </div>
       <div className="swipe-layout">
         <aside className="swipe-aside">
           <span className="eyebrow">
-            {state.learned ? "YOUR PERSONAL EDIT" : "THE EXPLORATION EDIT"}
+            {t(state.learned ? "YOUR PERSONAL EDIT" : "THE EXPLORATION EDIT")}
           </span>
           <h3>
-            {state.learned
-              ? "Familiar pieces.\nBetter chemistry."
-              : "A little variety.\nA little discovery."}
+            {t(
+              state.learned
+                ? "Familiar pieces.\nBetter chemistry."
+                : "A little variety.\nA little discovery.",
+            )}
           </h3>
           <p>
-            {state.learned
-              ? "Your feedback changes how we rank these combinations. Keep rating to refine the picture."
-              : "We’re trying different shapes, palettes and proportions to learn what feels like you."}
+            {t(
+              state.learned
+                ? "Your feedback changes how we rank these combinations. Keep rating to refine the picture."
+                : "We’re trying different shapes, palettes and proportions to learn what feels like you.",
+            )}
           </p>
           <div className="rating-dots">
             {Array.from({ length: 5 }, (_, i) => (
@@ -186,13 +196,15 @@ export default function Swipe({
             ))}
           </div>
           <small>
-            {state.learned
-              ? `${profile.ratings} outfits rated`
-              : `${progress} of 5 first impressions`}
+            {t(
+              state.learned
+                ? `${profile.ratings} outfits rated`
+                : `${progress} of 5 first impressions`,
+            )}
           </small>
           {state.learned && (
             <button className="text-button" onClick={onBuilder}>
-              Visit the outfit studio
+              {t("Visit the outfit studio")}
               <ArrowUpRight size={16} />
             </button>
           )}
@@ -227,24 +239,28 @@ export default function Swipe({
           >
             <div className="outfit-card-top">
               <span>
-                LOOK {String(state.feedback.length + 1).padStart(2, "0")}
+                {t("LOOK ")}
+                {t(String(state.feedback.length + 1).padStart(2, "0"))}
               </span>
               <span>
-                {state.learned
-                  ? `${pct(preferenceScore(current, profile))}/100 taste score`
-                  : "A fresh combination"}
+                {t(
+                  state.learned
+                    ? `${pct(preferenceScore(current, profile))}/100 taste score`
+                    : "A fresh combination",
+                )}
               </span>
             </div>
             <FlatLay outfit={current} />
             <PaletteNote outfit={current} />
             {hasWeather && (
               <div className="weather-reason">
-                <span className="eyebrow">WHY THESE PIECES</span>
+                <span className="eyebrow">{t("WHY THESE PIECES")}</span>
                 <p>
                   {weatherReason(
                     current,
                     state.weather,
                     state.thermalOverrides,
+                    t,
                   )}
                 </p>
               </div>
@@ -265,14 +281,15 @@ export default function Swipe({
                 )
                 .slice(0, 2)
                 .map(([key]) => (
-                  <span key={key}>{LABELS[key]}</span>
+                  <span key={key}>{t(LABELS[key])}</span>
                 ))}
             </div>
           </div>
           {pending ? (
             <div className="reason-panel">
               <h3>
-                What felt off? <span>Optional</span>
+                {t("What felt off? ")}
+                <span>{t("Optional")}</span>
               </h3>
               <div className="reason-chips">
                 {REASONS.map((r) => (
@@ -281,7 +298,7 @@ export default function Swipe({
                     disabled={!!leaving}
                     onClick={() => rate("dislike", r)}
                   >
-                    {r}
+                    {t(r)}
                   </button>
                 ))}
               </div>
@@ -290,14 +307,14 @@ export default function Swipe({
                 disabled={!!leaving}
                 onClick={() => rate("dislike")}
               >
-                Skip reason & keep going
+                {t("Skip reason & keep going")}
                 <ArrowRight size={16} />
               </button>
               <button
                 className="cancel-reason"
                 onClick={() => setPending(false)}
               >
-                Cancel
+                {t("Cancel")}
               </button>
             </div>
           ) : (
@@ -308,7 +325,7 @@ export default function Swipe({
                 onClick={() => setPending(true)}
               >
                 <X size={22} />
-                Not for me
+                {t("Not for me")}
               </button>
               <button
                 className="love"
@@ -316,23 +333,25 @@ export default function Swipe({
                 onClick={() => rate("like")}
               >
                 <Heart size={22} />
-                Love this
+                {t("Love this")}
               </button>
             </div>
           )}
           <p className="swipe-hint">
-            {pending
-              ? "Your choice, your reasons."
-              : "Swipe left or right, or use the buttons."}
+            {t(
+              pending
+                ? "Your choice, your reasons."
+                : "Swipe left or right, or use the buttons.",
+            )}
           </p>
         </div>
         <aside className="swipe-note">
           <span>100%</span>
-          <p>from your closet</p>
+          <p>{t("from your closet")}</p>
           <div className="handwritten">
-            New possibilities,
+            {t("New possibilities,")}
             <br />
-            same favorite pieces.
+            {t("same favorite pieces.")}
           </div>
         </aside>
       </div>

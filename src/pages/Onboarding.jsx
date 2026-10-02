@@ -1,3 +1,4 @@
+import { useLanguage } from "../i18n/Language.jsx";
 import { useEffect, useRef, useState } from "react";
 import { ArrowLeft, ArrowRight, Check } from "lucide-react";
 import { BY_ID, COLORS, DEFAULT_COLORS } from "../data/catalog.js";
@@ -18,6 +19,7 @@ export default function Onboarding({
   onComplete,
   storageError,
 }) {
+  const { t } = useLanguage();
   const draft = normalizeOnboarding(state.onboarding);
   const group = SETUP_GROUPS[draft.group];
   const choices = draft.selections[group.key] ?? [];
@@ -133,7 +135,7 @@ export default function Onboarding({
         {draft.step !== "welcome" ? (
           <button className="setup-back" onClick={back}>
             <ArrowLeft size={18} />
-            <span>Back</span>
+            <span>{t("Back")}</span>
           </button>
         ) : (
           <span />
@@ -146,7 +148,7 @@ export default function Onboarding({
             className="setup-skip"
             onClick={() => update(nextGroup(draft))}
           >
-            Skip
+            {t("Skip")}
           </button>
         ) : (
           <span />
@@ -156,7 +158,7 @@ export default function Onboarding({
         <div
           className="setup-progress"
           role="progressbar"
-          aria-label="Closet setup"
+          aria-label={t("Closet setup")}
           aria-valuemin={0}
           aria-valuemax={3}
           aria-valuenow={Math.min(
@@ -166,9 +168,9 @@ export default function Onboarding({
                 ? (draft.colorIndex + 1) / (choices.length + 1)
                 : 0),
           )}
-          aria-valuetext={
-            group.optional ? "Essentials done. Optional pieces." : group.key
-          }
+          aria-valuetext={t(
+            group.optional ? "Essentials done. Optional pieces." : group.key,
+          )}
         >
           {[0, 1, 2].map((i) => (
             <span key={i}>
@@ -183,24 +185,24 @@ export default function Onboarding({
       )}
       {storageError && (
         <p className="setup-error" role="alert">
-          {storageError}
+          {t(storageError)}
         </p>
       )}
       <main className="setup-main" key={screen}>
         {draft.step === "welcome" && (
           <>
             <div className="setup-intro">
-              <span className="eyebrow">A WARDROBE THAT GETS YOU</span>
+              <span className="eyebrow">{t("A WARDROBE THAT GETS YOU")}</span>
               <h1 ref={title} tabIndex={-1}>
-                Your clothes.
+                {t("Your clothes.")}
                 <br />
-                <em>Your kind of style.</em>
+                <em>{t("Your kind of style.")}</em>
               </h1>
-              <p>Start with a few pieces you already own.</p>
+              <p>{t("Start with a few pieces you already own.")}</p>
             </div>
             <div
               className="setup-welcome-art"
-              aria-label="A tee, jeans and sneakers"
+              aria-label={t("A tee, jeans and sneakers")}
             >
               <div>
                 <Garment item={BY_ID["crew-tee:white"]} />
@@ -221,14 +223,16 @@ export default function Onboarding({
           <>
             <div className="setup-question">
               <span className="eyebrow">
-                {group.optional
-                  ? "A LITTLE EXTRA · OPTIONAL"
-                  : "JUST THE EVERYDAY FAVORITES"}
+                {t(
+                  group.optional
+                    ? "A LITTLE EXTRA · OPTIONAL"
+                    : "JUST THE EVERYDAY FAVORITES",
+                )}
               </span>
               <h1 ref={title} tabIndex={-1}>
-                {group.title}
+                {t(group.title)}
               </h1>
-              <p>Pick as many as you like.</p>
+              <p>{t("Pick as many as you like.")}</p>
             </div>
             <div className="setup-fit-grid">
               {group.items.map((key) => {
@@ -246,10 +250,10 @@ export default function Onboarding({
                     key={key}
                     onClick={() => chooseFit(key)}
                     aria-pressed={selected}
-                    aria-label={garment.name}
+                    aria-label={t(garment.name)}
                   >
                     <Garment item={garment} />
-                    <span>{garment.name}</span>
+                    <span>{t(garment.name)}</span>
                     <span className="setup-check" aria-hidden="true">
                       {selected && <Check size={14} />}
                     </span>
@@ -262,26 +266,26 @@ export default function Onboarding({
         {draft.step === "colors" && item && (
           <>
             <div className="setup-question">
-              <span className="eyebrow">{item.name}</span>
+              <span className="eyebrow">{t(item.name)}</span>
               <h1 ref={title} tabIndex={-1}>
-                Which colors
+                {t("Which colors")}
                 <br />
-                do you own?
+                {t("do you own?")}
               </h1>
-              <p>Pick every color you have.</p>
+              <p>{t("Pick every color you have.")}</p>
             </div>
             <div className="setup-color-art">
               <Garment item={item} />
             </div>
             <div
               className="setup-colors"
-              aria-label={`Colors for ${item.name}`}
+              aria-label={t(`Colors for ${item.name}`)}
             >
               {Object.entries(COLORS).map(([color, { hex }]) => (
                 <button
                   key={color}
                   aria-pressed={selectedColors.includes(color)}
-                  aria-label={color}
+                  aria-label={t(color)}
                   className={selectedColors.includes(color) ? "chosen" : ""}
                   onClick={() => chooseColor(color)}
                 >
@@ -304,7 +308,7 @@ export default function Onboarding({
                       />
                     )}
                   </span>
-                  <span>{color}</span>
+                  <span>{t(color)}</span>
                 </button>
               ))}
             </div>
@@ -317,13 +321,20 @@ export default function Onboarding({
                 ✳
               </span>
               <h1 ref={title} tabIndex={-1}>
-                Your closet
+                {t("Your closet")}
                 <br />
-                is <em>taking shape.</em>
+                {t("is ")}
+                <em>{t("taking shape.")}</em>
               </h1>
-              <p className="setup-piece-count">{state.closet.length} pieces</p>
+              <p className="setup-piece-count">
+                {t(state.closet.length)}
+                {t(" pieces")}
+              </p>
             </div>
-            <div className="setup-preview" aria-label="Your selected clothes">
+            <div
+              className="setup-preview"
+              aria-label={t("Your selected clothes")}
+            >
               {state.closet.slice(0, 12).map((id) => (
                 <div key={id}>
                   <Garment item={BY_ID[id]} />
@@ -331,7 +342,7 @@ export default function Onboarding({
               ))}
             </div>
             <p className="setup-payoff-note">
-              Now, let’s find what feels like you.
+              {t("Now, let’s find what feels like you.")}
             </p>
           </>
         )}
@@ -344,13 +355,13 @@ export default function Onboarding({
               disabled={!complete}
               onClick={onComplete}
             >
-              Dress for today
+              {t("Dress for today")}
               <ArrowRight size={19} />
             </button>
           ) : early && draft.step !== "welcome" ? (
             <>
               <button className="primary" onClick={showReady}>
-                Start with these
+                {t("Start with these")}
                 <ArrowRight size={19} />
               </button>
               <button
@@ -358,18 +369,18 @@ export default function Onboarding({
                 disabled={disabled}
                 onClick={forward}
               >
-                Keep adding
+                {t("Keep adding")}
               </button>
             </>
           ) : (
             <button className="primary" disabled={disabled} onClick={forward}>
-              {draft.step === "welcome" ? "Build my closet" : "Continue"}
+              {t(draft.step === "welcome" ? "Build my closet" : "Continue")}
               <ArrowRight size={19} />
             </button>
           )}
           {draft.step === "welcome" && (
             <span className="setup-footnote">
-              A few favorites are enough. Add more whenever.
+              {t("A few favorites are enough. Add more whenever.")}
             </span>
           )}
         </div>

@@ -1,3 +1,4 @@
+import { useLanguage } from "../i18n/Language.jsx";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowLeft,
@@ -35,6 +36,7 @@ export default function Today({
   onCloset,
   onboarding = false,
 }) {
+  const { t } = useLanguage();
   const weather = state.weather ?? freshWeather();
   const [step, setStep] = useState(() =>
     weather.date === today() && validRange(weather.lowC, weather.highC)
@@ -169,7 +171,8 @@ export default function Today({
                 : () => setStep(step === "comfort" ? "weather" : "comfort")
             }
           >
-            <ArrowLeft size={18} /> Back
+            <ArrowLeft size={18} />
+            {t(" Back")}
           </button>
           <span className="wordmark">
             wearwell<span>✳</span>
@@ -182,14 +185,14 @@ export default function Today({
           <div className="weather-icon">
             <Sun size={28} />
           </div>
-          <span className="eyebrow">DRESS FOR THE WHOLE DAY</span>
+          <span className="eyebrow">{t("DRESS FOR THE WHOLE DAY")}</span>
           <h1>
-            What’s the weather
+            {t("What’s the weather")}
             <br />
-            <em>doing today?</em>
+            <em>{t("doing today?")}</em>
           </h1>
-          <p>Enter today’s low and high.</p>
-          <div className="weather-units" aria-label="Temperature unit">
+          <p>{t("Enter today’s low and high.")}</p>
+          <div className="weather-units" aria-label={t("Temperature unit")}>
             {["C", "F"].map((u) => (
               <button
                 type="button"
@@ -197,47 +200,50 @@ export default function Today({
                 aria-pressed={u === unit}
                 onClick={() => changeUnit(u)}
               >
-                °{u} {u === "C" ? "Celsius" : "Fahrenheit"}
+                °{t(u)} {t(u === "C" ? "Celsius" : "Fahrenheit")}
               </button>
             ))}
           </div>
           <div className="weather-inputs">
             <label>
-              Lowest · °{unit}
+              {t("Lowest · °")}
+              {t(unit)}
               <input
                 type="number"
                 step="any"
                 inputMode="decimal"
                 value={low}
                 onChange={(e) => setLow(e.target.value)}
-                placeholder={unit === "C" ? "9" : "48"}
+                placeholder={t(unit === "C" ? "9" : "48")}
                 required
               />
             </label>
             <label>
-              Highest · °{unit}
+              {t("Highest · °")}
+              {t(unit)}
               <input
                 type="number"
                 step="any"
                 inputMode="decimal"
                 value={high}
                 onChange={(e) => setHigh(e.target.value)}
-                placeholder={unit === "C" ? "17" : "63"}
+                placeholder={t(unit === "C" ? "17" : "63")}
                 required
               />
             </label>
           </div>
           <p className="weather-small">
-            Use your forecast. We’ll plan for both ends of the day.
+            {t("Use your forecast. We’ll plan for both ends of the day.")}
           </p>
           {error && (
             <p className="weather-error" role="alert">
-              {error}
+              {t(error)}
             </p>
           )}
           <div className="weather-action">
             <button className="primary" type="submit">
-              Continue <ArrowRight size={18} />
+              {t("Continue ")}
+              <ArrowRight size={18} />
             </button>
           </div>
         </form>
@@ -247,13 +253,13 @@ export default function Today({
           <div className="weather-icon">
             <Thermometer size={28} />
           </div>
-          <span className="eyebrow">YOUR COMFORT COMES FIRST</span>
+          <span className="eyebrow">{t("YOUR COMFORT COMES FIRST")}</span>
           <h1>
-            How does the cold
+            {t("How does the cold")}
             <br />
-            <em>feel to you?</em>
+            <em>{t("feel to you?")}</em>
           </h1>
-          <p>It’s personal. You can change this anytime.</p>
+          <p>{t("It’s personal. You can change this anytime.")}</p>
           <div className="comfort-options">
             {[
               [
@@ -276,8 +282,8 @@ export default function Today({
                 onClick={() => setComfort(id)}
               >
                 <span>
-                  <b>{name}</b>
-                  <small>{detail}</small>
+                  <b>{t(name)}</b>
+                  <small>{t(detail)}</small>
                 </span>
                 {comfort === id && <Check size={18} />}
               </button>
@@ -285,7 +291,7 @@ export default function Today({
           </div>
           {comfort === "custom" && (
             <label className="coat-threshold">
-              I want a big coat at or below (°{unit})
+              {t("I want a big coat at or below (°{0})", [unit])}
               <input
                 type="number"
                 step="any"
@@ -294,26 +300,28 @@ export default function Today({
                 required
               />
               <small>
-                For example, {temperature(17, unit)} if mild days still feel
-                cold.
+                {t("For example, {0} if mild days still feel cold.", [
+                  temperature(17, unit),
+                ])}
               </small>
             </label>
           )}
           {error && (
             <p className="weather-error" role="alert">
-              {error}
+              {t(error)}
             </p>
           )}
           <div className="weather-action">
             <button className="primary" type="submit">
-              Find today’s outfit <ArrowRight size={18} />
+              {t("Find today’s outfit ")}
+              <ArrowRight size={18} />
             </button>
             <button
               className="text-button"
               type="button"
               onClick={() => setStep("weather")}
             >
-              Back to temperatures
+              {t("Back to temperatures")}
             </button>
           </div>
         </form>
@@ -321,19 +329,19 @@ export default function Today({
       {step === "look" && (
         <div className="today-result">
           <div className="today-result-heading">
-            <span className="eyebrow">FROM YOUR CLOSET · FOR TODAY</span>
+            <span className="eyebrow">{t("FROM YOUR CLOSET · FOR TODAY")}</span>
             <h1>
-              A little less
+              {t("A little less")}
               <br />
-              <em>what should I wear?</em>
+              <em>{t("what should I wear?")}</em>
             </h1>
             <button className="weather-pill" onClick={() => setStep("weather")}>
               <Snowflake size={16} />
-              {temperature(weather.lowC, unit)}
+              {t(temperature(weather.lowC, unit))}
               <span>→</span>
               <Sun size={16} />
-              {temperature(weather.highC, unit)}
-              <span> Edit</span>
+              {t(temperature(weather.highC, unit))}
+              <span>{t(" Edit")}</span>
             </button>
           </div>
           <WeatherNeeds
@@ -348,13 +356,13 @@ export default function Today({
                 <FlatLay outfit={current} />
                 <PaletteNote outfit={current} />
                 <div className="weather-reason">
-                  <span className="eyebrow">WHY THESE PIECES</span>
+                  <span className="eyebrow">{t("WHY THESE PIECES")}</span>
                   <p>
-                    {weatherReason(current, weather, state.thermalOverrides)}
+                    {weatherReason(current, weather, state.thermalOverrides, t)}
                   </p>
                   {finishingSuggestion && (
                     <p className="optional-finishing-touch">
-                      {finishingSuggestion}
+                      {t(finishingSuggestion)}
                     </p>
                   )}
                 </div>
@@ -365,24 +373,25 @@ export default function Today({
                   disabled={ranked.length < 2}
                   onClick={() => setIndex((i) => i + 1)}
                 >
-                  Try another look
+                  {t("Try another look")}
                 </button>
                 <button
                   className="text-button"
                   onClick={() => setStep("comfort")}
                 >
-                  Adjust my comfort
+                  {t("Adjust my comfort")}
                 </button>
               </div>
               <details className="piece-guides">
                 <summary>
-                  Temperature guides for these pieces <span>Personalize</span>
+                  {t("Temperature guides for these pieces ")}
+                  <span>{t("Personalize")}</span>
                 </summary>
                 <p>
-                  Starting estimates in °{unit}, not universal rules. Top ranges
-                  refer to wearing the top without extra layers; layering
-                  changes the whole outfit. Wind, rain, fabric and activity can
-                  change how you feel.
+                  {t(
+                    "Starting estimates in °{0}, not universal rules. Top ranges refer to wearing the top without extra layers; layering changes the whole outfit. Wind, rain, fabric and activity can change how you feel.",
+                    [unit],
+                  )}
                 </p>
                 {current.itemIds.map((id) => (
                   <PieceGuide
@@ -406,8 +415,9 @@ export default function Today({
             </>
           ) : (
             <p>
-              Let's start with a base and shoes that suit today’s temperature.
-              Add one of the suggested pieces above to build your look.
+              {t(
+                "Let's start with a base and shoes that suit today’s temperature. Add one of the suggested pieces above to build your look.",
+              )}
             </p>
           )}
           <div className="today-finish">
@@ -416,10 +426,11 @@ export default function Today({
               disabled={!current}
               onClick={onComplete}
             >
-              Teach Wearwell my style <ArrowRight size={18} />
+              {t("Teach Wearwell my style ")}
+              <ArrowRight size={18} />
             </button>
             <button className="text-button" onClick={onCloset}>
-              Add warmer or lighter pieces
+              {t("Add warmer or lighter pieces")}
             </button>
           </div>
         </div>
@@ -429,6 +440,7 @@ export default function Today({
 }
 
 function PieceGuide({ item, unit, overrides, onSave }) {
+  const { t } = useLanguage();
   const guide = guideFor(item, overrides);
   const [low, setLow] = useState(String(Math.round(fromC(guide.minC, unit))));
   const [high, setHigh] = useState(String(Math.round(fromC(guide.maxC, unit))));
@@ -438,7 +450,7 @@ function PieceGuide({ item, unit, overrides, onSave }) {
       <Garment item={item} />
       <div>
         <b>
-          {item.color} {item.name}
+          {t(item.color)} {t(item.name)}
         </b>
         {guide.active ? (
           <form
@@ -456,32 +468,34 @@ function PieceGuide({ item, unit, overrides, onSave }) {
           >
             <div>
               <input
-                aria-label={`${item.name} minimum temperature`}
+                aria-label={t(`${item.name} minimum temperature`)}
                 type="number"
                 step="any"
                 value={low}
                 onChange={(e) => setLow(e.target.value)}
               />
-              <span>to</span>
+              <span>{t("to")}</span>
               <input
-                aria-label={`${item.name} maximum temperature`}
+                aria-label={t(`${item.name} maximum temperature`)}
                 type="number"
                 step="any"
                 value={high}
                 onChange={(e) => setHigh(e.target.value)}
               />
-              <span>°{unit}</span>
-              <button type="submit">Save</button>
+              <span>°{t(unit)}</span>
+              <button type="submit">{t("Save")}</button>
             </div>
             <small role="status">
-              {status ||
-                (overrides?.[item.id]
-                  ? "Your own comfort guide"
-                  : "Wearwell starting guide")}
+              {t(
+                status ||
+                  (overrides?.[item.id]
+                    ? "Your own comfort guide"
+                    : "Wearwell starting guide"),
+              )}
             </small>
           </form>
         ) : (
-          <small>Styling piece · no warmth assumed</small>
+          <small>{t("Styling piece · no warmth assumed")}</small>
         )}
       </div>
     </div>

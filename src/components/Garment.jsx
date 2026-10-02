@@ -1,3 +1,4 @@
+import { useLanguage } from "../i18n/Language.jsx";
 import { COLORS } from "../data/catalog.js";
 
 export function ColorFilters() {
@@ -44,11 +45,12 @@ export const illustrationMap = {
   "wardrobe-seasonal-atlas": "/assets/wardrobe-seasonal-atlas.png",
 };
 export default function Garment({ item, className = "" }) {
+  const { t } = useLanguage();
   const cell = item.sprite % 36;
   return (
     <span
       role="img"
-      aria-label={`${item.color} ${item.name}`}
+      aria-label={t(`${item.color} ${item.name}`)}
       className={`garment ${className}`}
       style={{
         backgroundImage: `url(${illustrationMap[item.assetKey]})`,

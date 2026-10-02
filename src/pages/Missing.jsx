@@ -1,3 +1,4 @@
+import { useLanguage } from "../i18n/Language.jsx";
 import { useState, useEffect, useMemo } from "react";
 import { ArrowLeft, ArrowRight, Plus, Check, ChevronDown } from "lucide-react";
 import { gaps } from "../engine/wardrobe.js";
@@ -7,6 +8,7 @@ import FlatLay from "../components/FlatLay.jsx";
 import "../missing.css";
 
 function Piece({ gap, onAdd }) {
+  const { t } = useLanguage();
   const [showColors, setShowColors] = useState(false);
   const [color, setColor] = useState(gap.item.color);
   const [exploring, setExploring] = useState(false);
@@ -16,15 +18,17 @@ function Piece({ gap, onAdd }) {
     <article
       className="missing-piece"
       id="missing-piece"
-      aria-label={gap.item.name}
+      aria-label={t(gap.item.name)}
     >
       <div className="missing-visual">
         <Garment item={showColors ? item : gap.item} />
       </div>
-      <h2>{gap.item.name}</h2>
-      <p className="missing-reason">{gap.shortReason}</p>
+      <h2>{t(gap.item.name)}</h2>
+      <p className="missing-reason">{t(gap.shortReason)}</p>
       <p className="missing-count">
-        +{gap.likely} outfit possibilities <small>estimated</small>
+        +{t(gap.likely)}
+        {t(" outfit possibilities ")}
+        <small>{t("estimated")}</small>
       </p>
       <div className="missing-actions">
         <button
@@ -35,7 +39,8 @@ function Piece({ gap, onAdd }) {
             setShowColors(false);
           }}
         >
-          Explore outfits <ArrowRight size={15} />
+          {t("Explore outfits ")}
+          <ArrowRight size={15} />
         </button>
         <button
           aria-expanded={showColors}
@@ -45,25 +50,27 @@ function Piece({ gap, onAdd }) {
             setExploring(false);
           }}
         >
-          <Plus size={15} /> Already have this?
+          <Plus size={15} />
+          {t(" Already have this?")}
         </button>
       </div>
       {showColors && (
         <div className="missing-colors" id="missing-colors">
           <p>
-            Which color do you own? <b>{color}</b>
+            {t("Which color do you own? ")}
+            <b>{t(color)}</b>
           </p>
           <div
             className="missing-swatches"
             role="group"
-            aria-label="Owned color"
+            aria-label={t("Owned color")}
           >
             {Object.entries(COLORS).map(([name, swatch]) => (
               <button
                 key={name}
-                aria-label={name}
+                aria-label={t(name)}
                 aria-pressed={color === name}
-                title={name}
+                title={t(name)}
                 style={{ "--swatch": swatch.hex }}
                 onClick={() => setColor(name)}
               >
@@ -75,7 +82,8 @@ function Piece({ gap, onAdd }) {
             className="primary missing-add"
             onClick={() => onAdd(item.id)}
           >
-            <Plus size={16} /> Add to closet
+            <Plus size={16} />
+            {t(" Add to closet")}
           </button>
         </div>
       )}
@@ -84,17 +92,18 @@ function Piece({ gap, onAdd }) {
           <FlatLay outfit={gap.examples[example]} ghostId={gap.item.id} small />
           <div className="missing-pager">
             <button
-              aria-label="Previous outfit"
+              aria-label={t("Previous outfit")}
               disabled={example === 0}
               onClick={() => setExample(example - 1)}
             >
               <ArrowLeft size={17} />
             </button>
             <span>
-              {example + 1} / {gap.examples.length} · everything else is yours
+              {t(example + 1)} / {t(gap.examples.length)}
+              {t(" · everything else is yours")}
             </span>
             <button
-              aria-label="Next outfit"
+              aria-label={t("Next outfit")}
               disabled={example === gap.examples.length - 1}
               onClick={() => setExample(example + 1)}
             >
@@ -108,6 +117,7 @@ function Piece({ gap, onAdd }) {
 }
 
 export default function Missing({ state, profile, track, onAdd }) {
+  const { t } = useLanguage();
   const results = useMemo(
     () => gaps(state.closet, profile),
     [state.closet, profile],
@@ -121,13 +131,15 @@ export default function Missing({ state, profile, track, onAdd }) {
   }, [gap?.item.id]);
   return (
     <section className="missing-simple">
-      <h1>A little more possibility.</h1>
+      <h1>{t("A little more possibility.")}</h1>
       <p className="missing-intro">
-        {results.length
-          ? "Tap a piece to see what it could add."
-          : "Nothing obvious missing. Keep exploring your style."}
+        {t(
+          results.length
+            ? "Tap a piece to see what it could add."
+            : "Nothing obvious missing. Keep exploring your style.",
+        )}
       </p>
-      <div className="missing-tags" aria-label="Pieces to explore">
+      <div className="missing-tags" aria-label={t("Pieces to explore")}>
         {results.map((g) => (
           <button
             key={g.item.id}
@@ -136,7 +148,7 @@ export default function Missing({ state, profile, track, onAdd }) {
             aria-controls="missing-piece"
             onClick={() => setActive(active === g.item.id ? null : g.item.id)}
           >
-            {g.item.name}
+            {t(g.item.name)}
             <ChevronDown size={14} />
           </button>
         ))}
@@ -144,7 +156,7 @@ export default function Missing({ state, profile, track, onAdd }) {
       {added && (
         <p className="missing-added" role="status">
           <Check size={16} />
-          {added}
+          {t(added)}
         </p>
       )}
       {gap && (

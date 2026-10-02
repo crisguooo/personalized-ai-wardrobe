@@ -1,5 +1,14 @@
 # MVP verification
 
+## 2026-10-02 — English / Simplified Chinese
+
+- Added a top-right EN / 中文 control to setup and the normal product header. First visits follow browser language; explicit choices persist in a separate `wearwell:language` key. Existing wardrobe data and engine identifiers are unchanged.
+- Localized all consumer screens, 72 garment names, 14 color labels, style tags, 16 brand descriptions, weather reasoning, gap suggestions, validation/status messages and accessible labels. Chinese typography uses local font fallbacks. Raw development diagnostics retain technical keys.
+- Added seven localization tests: catalog/copy coverage, dynamic sentences, blocked-storage fallback, persisted language selection, wardrobe-data preservation, weather explanation branches and English/proper-name fallback. Full suite: 110 tests. Recommendation algorithms and scores are unchanged; `weatherReason` accepts an optional presentation formatter.
+- Browser QA used a separate localhost origin on port 5174: Chinese welcome; seasonal selections; three selected colors preserved through EN → 中文; eight-piece early start; 9–17°C inputs preserved when switching language; equivalent Fahrenheit values 48.2–62.6°F; comfort choice; Chinese cold warning; Swipe & Learn; Like recorded; save state preserved across language switch; Chinese brand filters; Missing → choose brown ankle boots → Add to closet; refresh preserved Chinese and the newly added piece.
+- Checked the top-right control at a 390px mobile viewport with no horizontal overflow, then restored the viewport. No captured browser console errors. Test data is confined to port 5174, separate from the existing production demo and port 5173.
+- This release updates GitHub source first. The existing Vercel deployment is a manual static upload and will not change from a Git push alone.
+
 ## Automated
 
 - 50 Node tests pass. The new fashion-engine cases cover layer capacity, valid defined/roomy silhouettes, learned ranking reversals, targeted dislikes, confidence and nonredundant insights, occasion objectives, practical footwear, soft palette scoring, refinements, diversity, swap locking, shared-engine gap value and legacy persistence. Existing winter, units, onboarding and storage regressions continue to pass.

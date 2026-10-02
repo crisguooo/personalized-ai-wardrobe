@@ -1,3 +1,4 @@
+import { useLanguage } from "../i18n/Language.jsx";
 import { useState } from "react";
 import { ArrowRight, Check, Plus, X } from "lucide-react";
 import {
@@ -10,24 +11,29 @@ import {
 import Garment from "../components/Garment.jsx";
 import "../closet.css";
 export default function Closet({ state, owned, toggle, start, ready }) {
+  const { t } = useLanguage();
   const [colors, setColors] = useState({});
   const [categoryFilter, setCategoryFilter] = useState("top");
   return (
     <section className="simple-closet">
       <h1>
-        Tell us <em>what you own.</em>
+        {t("Tell us ")}
+        <em>{t("what you own.")}</em>
       </h1>
       <div className="closet-lists">
-        <section className="clothes-column" aria-label="All clothes">
-          <h2>All clothes</h2>
-          <div className="closet-categories" aria-label="Clothing categories">
+        <section className="clothes-column" aria-label={t("All clothes")}>
+          <h2>{t("All clothes")}</h2>
+          <div
+            className="closet-categories"
+            aria-label={t("Clothing categories")}
+          >
             {CATEGORIES.filter(([key]) => key !== "all").map(([key, label]) => (
               <button
                 key={key}
                 aria-pressed={categoryFilter === key}
                 onClick={() => setCategoryFilter(key)}
               >
-                {label}
+                {t(label)}
               </button>
             ))}
           </div>
@@ -35,12 +41,12 @@ export default function Closet({ state, owned, toggle, start, ready }) {
             key={categoryFilter}
             className="clothes-scroll"
             tabIndex={0}
-            aria-label="Browse all clothes"
+            aria-label={t("Browse all clothes")}
           >
             {CATEGORIES.filter(([key]) => key === categoryFilter).map(
               ([category, name]) => (
                 <div key={category} className="clothes-group">
-                  <h3>{name}</h3>
+                  <h3>{t(name)}</h3>
                   {ARCHETYPES.filter((a) => a.category === category).map(
                     (a) => {
                       const color =
@@ -51,9 +57,9 @@ export default function Closet({ state, owned, toggle, start, ready }) {
                         <div className="clothes-row" key={a.key}>
                           <Garment item={item} />
                           <div className="clothes-name">
-                            <span>{a.name}</span>
+                            <span>{t(a.name)}</span>
                             <select
-                              aria-label={a.name + " color"}
+                              aria-label={t(a.name + " color")}
                               value={color}
                               onChange={(e) =>
                                 setColors((s) => ({
@@ -64,7 +70,7 @@ export default function Closet({ state, owned, toggle, start, ready }) {
                             >
                               {Object.keys(COLORS).map((c) => (
                                 <option key={c} value={c}>
-                                  {c}
+                                  {t(c)}
                                 </option>
                               ))}
                             </select>
@@ -73,12 +79,12 @@ export default function Closet({ state, owned, toggle, start, ready }) {
                             className={
                               "clothes-add " + (selected ? "added" : "")
                             }
-                            aria-label={
+                            aria-label={t(
                               (selected ? "Already added " : "Add ") +
-                              color +
-                              " " +
-                              a.name
-                            }
+                                color +
+                                " " +
+                                a.name,
+                            )}
                             disabled={selected}
                             onClick={() => toggle(item.id)}
                           >
@@ -99,33 +105,33 @@ export default function Closet({ state, owned, toggle, start, ready }) {
         </section>
         <section
           className="clothes-column owned-column"
-          aria-label="My clothes"
+          aria-label={t("My clothes")}
         >
-          <h2>My clothes</h2>
+          <h2>{t("My clothes")}</h2>
           <div
             key={categoryFilter}
             className="clothes-scroll"
             tabIndex={0}
-            aria-label="Clothes I own"
+            aria-label={t("Clothes I own")}
             aria-live="polite"
           >
             {!owned.length && (
               <p className="closet-empty-note">
-                Tap + on the left.
+                {t("Tap + on the left.")}
                 <br />
-                Your clothes appear here.
+                {t("Your clothes appear here.")}
               </p>
             )}
             {[...owned].reverse().map((item) => (
               <div className="clothes-row" key={item.id}>
                 <Garment item={item} />
                 <div className="clothes-name">
-                  <span>{item.name}</span>
-                  <small>{item.color}</small>
+                  <span>{t(item.name)}</span>
+                  <small>{t(item.color)}</small>
                 </div>
                 <button
                   className="clothes-remove"
-                  aria-label={"Remove " + item.color + " " + item.name}
+                  aria-label={t("Remove " + item.color + " " + item.name)}
                   onClick={() => toggle(item.id)}
                 >
                   <X size={16} />
@@ -136,9 +142,10 @@ export default function Closet({ state, owned, toggle, start, ready }) {
         </section>
       </div>
       <div className="simple-closet-footer">
-        {!ready && <p>Add a top, bottoms and shoes to continue.</p>}
+        {!ready && <p>{t("Add a top, bottoms and shoes to continue.")}</p>}
         <button className="primary" disabled={!ready} onClick={start}>
-          Dress for today <ArrowRight size={18} />
+          {t("Dress for today ")}
+          <ArrowRight size={18} />
         </button>
       </div>
     </section>

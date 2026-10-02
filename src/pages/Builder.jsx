@@ -1,3 +1,4 @@
+import { useLanguage } from "../i18n/Language.jsx";
 import { useState, useEffect, useRef, useMemo } from "react";
 import {
   ArrowUpRight,
@@ -43,6 +44,7 @@ export default function Builder({
   onLearn,
   onWeather,
 }) {
+  const { t } = useLanguage();
   const hasWeather =
     state.weather?.date === today() &&
     validRange(state.weather.lowC, state.weather.highC);
@@ -271,16 +273,16 @@ export default function Builder({
     <section className="builder-page">
       <div className="page-heading compact">
         <div>
-          <div className="eyebrow">YOUR PERSONAL OUTFIT STUDIO</div>
+          <div className="eyebrow">{t("YOUR PERSONAL OUTFIT STUDIO")}</div>
           <h1>
-            Same clothes.
+            {t("Same clothes.")}
             <br />
-            <em>New chemistry.</em>
+            <em>{t("New chemistry.")}</em>
           </h1>
         </div>
         <button className="outline" onClick={onLearn}>
           <Heart size={17} />
-          Refine my taste
+          {t("Refine my taste")}
         </button>
       </div>
       {hasWeather && (
@@ -295,13 +297,14 @@ export default function Builder({
           className={tab === "studio" ? "active" : ""}
           onClick={() => setTab("studio")}
         >
-          The studio
+          {t("The studio")}
         </button>
         <button
           className={tab === "saved" ? "active" : ""}
           onClick={() => setTab("saved")}
         >
-          Saved looks · {state.saved.length}
+          {t("Saved looks · ")}
+          {t(state.saved.length)}
         </button>
       </div>
       {tab === "saved" ? (
@@ -338,36 +341,40 @@ export default function Builder({
               >
                 <FlatLay outfit={o} small />
                 <span>
-                  {o.occasion} <ArrowUpRight size={16} />
+                  {t(o.occasion)} <ArrowUpRight size={16} />
                 </span>
               </button>
             ))
           ) : (
             <div className="inline-empty">
-              Your favorite combinations belong here. Save a look from the
-              studio.
+              {t(
+                "Your favorite combinations belong here. Save a look from the studio.",
+              )}
             </div>
           )}
         </div>
       ) : !current ? (
         <div className="inline-empty">
           <p>
-            Start with a base and shoes that suit today’s temperature. Review
-            today’s suggestions to build a comfortable look.
+            {t(
+              "Start with a base and shoes that suit today’s temperature. Review today’s suggestions to build a comfortable look.",
+            )}
           </p>
           <button className="primary" onClick={onWeather}>
-            Review today’s needs
+            {t("Review today’s needs")}
           </button>
         </div>
       ) : (
         <div className="builder-layout">
           <aside className="builder-controls">
             <button className="weather-pill" onClick={onWeather}>
-              {hasWeather
-                ? `${temperature(state.weather.lowC, state.weather.unit)} → ${temperature(state.weather.highC, state.weather.unit)} · Edit weather`
-                : "Add today’s temperatures"}
+              {t(
+                hasWeather
+                  ? `${temperature(state.weather.lowC, state.weather.unit)} → ${temperature(state.weather.highC, state.weather.unit)} · Edit weather`
+                  : "Add today’s temperatures",
+              )}
             </button>
-            <span className="eyebrow">WHAT'S THE PLAN?</span>
+            <span className="eyebrow">{t("WHAT'S THE PLAN?")}</span>
             <div className="occasion-list">
               {["Everyday", "Going out", "Work", "Date", "Comfy"].map((o) => (
                 <button
@@ -394,7 +401,7 @@ export default function Builder({
                     );
                   }}
                 >
-                  {o}
+                  {t(o)}
                   {occasion === o ? (
                     <Check size={16} />
                   ) : (
@@ -405,23 +412,25 @@ export default function Builder({
             </div>
             <button className="primary" onClick={styleMe}>
               <Sparkles size={18} />
-              Style me
+              {t("Style me")}
             </button>
             <div className="studio-insight">
-              <span className="eyebrow">A LITTLE MORE YOU</span>
+              <span className="eyebrow">{t("A LITTLE MORE YOU")}</span>
               <p>
-                {profile.ratings
-                  ? `Built from ${profile.ratings} outfit ratings and the ${state.closet.length} pieces in your closet.`
-                  : "Your first looks start with variety. Rate a few to help us learn your taste."}
+                {t(
+                  profile.ratings
+                    ? `Built from ${profile.ratings} outfit ratings and the ${state.closet.length} pieces in your closet.`
+                    : "Your first looks start with variety. Rate a few to help us learn your taste.",
+                )}
               </p>
             </div>
             <div className="owned-picker">
-              <span className="eyebrow">ON YOUR RAIL</span>
+              <span className="eyebrow">{t("ON YOUR RAIL")}</span>
               <div>
                 {available.map((i) => (
                   <button
                     key={i.id}
-                    title={`${i.color} ${i.name}`}
+                    title={t(`${i.color} ${i.name}`)}
                     onClick={() => {
                       const old = current.itemIds.find(
                         (id) =>
@@ -452,7 +461,10 @@ export default function Builder({
           <div className="builder-deck-column">
             <div className="studio-canvas outfit-deck">
               <div className="outfit-card-top">
-                <span>{occasion.toUpperCase()} / YOUR EDIT</span>
+                <span>
+                  {t(occasion.toUpperCase())}
+                  {t(" / YOUR EDIT")}
+                </span>
                 <button
                   onClick={save}
                   className="save-button"
@@ -462,15 +474,16 @@ export default function Builder({
                     size={16}
                     fill={isSaved ? "currentColor" : "none"}
                   />
-                  {isSaved ? "Saved" : "Save look"}
+                  {t(isSaved ? "Saved" : "Save look")}
                 </button>
               </div>
               {deckDone ? (
                 <div className="deck-complete">
-                  <h2>A little more understood.</h2>
+                  <h2>{t("A little more understood.")}</h2>
                   <p>
-                    You've rated these looks. Try another plan or make a small
-                    shift below.
+                    {t(
+                      "You've rated these looks. Try another plan or make a small shift below.",
+                    )}
                   </p>
                   <button
                     className="outline"
@@ -481,7 +494,7 @@ export default function Builder({
                       styleMe();
                     }}
                   >
-                    Browse again
+                    {t("Browse again")}
                   </button>
                 </div>
               ) : (
@@ -536,7 +549,7 @@ export default function Builder({
                   />
                   {Math.abs(drag) > 35 && (
                     <span className="deck-drag-label">
-                      {drag < 0 ? "Like" : "Not for me"}
+                      {t(drag < 0 ? "Like" : "Not for me")}
                     </span>
                   )}
                 </div>
@@ -546,19 +559,19 @@ export default function Builder({
                   className="deck-like"
                   disabled={deckDone}
                   onClick={() => rateLook("like")}
-                  aria-label="Like this outfit"
+                  aria-label={t("Like this outfit")}
                 >
                   <Heart size={21} />
-                  <span>Like</span>
+                  <span>{t("Like")}</span>
                 </button>
-                <span>Would you wear this?</span>
+                <span>{t("Would you wear this?")}</span>
                 <button
                   disabled={deckDone}
                   onClick={() => rateLook("dislike")}
-                  aria-label="Dislike this outfit"
+                  aria-label={t("Dislike this outfit")}
                 >
                   <X size={21} />
-                  <span>Not for me</span>
+                  <span>{t("Not for me")}</span>
                 </button>
               </div>
               <PaletteNote outfit={current} />
@@ -570,21 +583,24 @@ export default function Builder({
               />
               {hasWeather && (
                 <div className="weather-reason">
-                  <span className="eyebrow">WHY THESE PIECES</span>
+                  <span className="eyebrow">{t("WHY THESE PIECES")}</span>
                   <p>
                     {weatherReason(
                       current,
                       state.weather,
                       state.thermalOverrides,
+                      t,
                     )}
                   </p>
                 </div>
               )}
               <div className="canvas-bottom">
                 <span>
-                  {selected
-                    ? `${BY_ID[selected].color} ${BY_ID[selected].name}`
-                    : "Tap a piece to make a small change."}
+                  {t(
+                    selected
+                      ? `${BY_ID[selected].color} ${BY_ID[selected].name}`
+                      : "Tap a piece to make a small change.",
+                  )}
                 </span>
                 <button
                   className="outline"
@@ -592,38 +608,42 @@ export default function Builder({
                   onClick={doSwap}
                 >
                   <Shuffle size={15} />
-                  Swap this
+                  {t("Swap this")}
                 </button>
               </div>
             </div>
             <aside className="refinement-panel">
-              <span className="eyebrow">THE FINISHING TOUCH</span>
+              <span className="eyebrow">{t("THE FINISHING TOUCH")}</span>
               <h3>
-                Almost you?
+                {t("Almost you?")}
                 <br />
-                <em>Make a little shift.</em>
+                <em>{t("Make a little shift.")}</em>
               </h3>
-              <p>A change of mood, without starting from scratch.</p>
+              <p>{t("A change of mood, without starting from scratch.")}</p>
               {["Less basic", "More casual", "More dressy", "More layered"].map(
                 (r) => (
                   <button key={r} onClick={() => refine(r)}>
-                    {r}
+                    {t(r)}
                     <Plus size={15} />
                   </button>
                 ),
               )}
               <div className="taste-score">
                 <span>
-                  {pct(preferenceScore(current, profile))}
+                  {t(pct(preferenceScore(current, profile)))}
                   <small>/100</small>
                 </span>
                 <p>
-                  {profile.ratings
-                    ? "Your current taste score"
-                    : "A neutral starting score"}
+                  {t(
+                    profile.ratings
+                      ? "Your current taste score"
+                      : "A neutral starting score",
+                  )}
                 </p>
               </div>
-              <small>Based on observed preferences, not a probability.</small>
+              <small>
+                {t("Based on observed preferences, not a probability.")}
+              </small>
             </aside>
           </div>
         </div>

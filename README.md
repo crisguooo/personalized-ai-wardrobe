@@ -8,6 +8,16 @@ Wearwell helps people decide what to wear from the clothes they already own. It 
 
 A consumer product prototype built with React, Vite and an explainable, local recommendation engine. No account, paid AI key or garment-photo upload is required for the demo.
 
+## English / 简体中文
+
+Use **EN / 中文** in the top-right corner to switch languages at any step, including first-time setup. On a first visit, Chinese-language browsers start in Simplified Chinese; other browsers start in English. An explicit language choice is remembered in this browser.
+
+中文版与英文版功能一致：建立衣橱、输入气温、调整体感、喜欢或不喜欢搭配、收藏、单品替换、品牌筛选，以及从衣橱灵感里添加已有单品。切换语言不会清空衣橱、评价、收藏或当前输入。
+
+UI copy, all 72 garment names, 14 colors, style tags, brand descriptions, weather explanations, notices and accessible labels are localized. Catalog IDs, saved outfits and recommendation scores remain language-independent. Translation runs locally, without a translation service or API charges. Development-only raw score diagnostics retain their technical field names.
+
+Translation sources are in `src/i18n/`. Add copy to `zh.js` and render it through `useLanguage().t`; use numbered placeholders for sentences with dynamic values so word order can differ. The localization tests cover copy coverage, dynamic explanations, locale persistence and wardrobe-data preservation. The public demo is a manually uploaded snapshot; a GitHub push alone does not update its deployed version.
+
 ## The problem
 
 Having a full wardrobe does not make getting dressed easy. People still need to answer three questions:
@@ -167,7 +177,7 @@ The deployment serves static assets. Recommendations, preference learning and pe
 | Browser persistence | `src/services/storage.js` |
 | Optional local prose provider | `server/` |
 
-**103 automated tests** cover owned-only deterministic generation, physical roles, intentional styling, color strategies, seasonal constraints, preference changes, swaps, gap quality and storage. Regression fixtures include competing outer layers and visually incoherent multi-piece looks. The current static snapshot was tested and built locally before upload. The included Vercel configuration also runs tests before building when deployed from Git.
+**110 automated tests** cover owned-only deterministic generation, physical roles, intentional styling, color strategies, seasonal constraints, preference changes, swaps, gap quality, storage and bilingual presentation. Regression fixtures include competing outer layers and visually incoherent multi-piece looks. Localization checks cover all catalog labels, weather explanations, language persistence and unchanged wardrobe data. The included Vercel configuration also runs tests before building when deployed from Git.
 
 In development, open `?debug=1#outfits` for score components, color strategy, visible-area shares and layer assignments. Diagnostics are excluded from production UI.
 
