@@ -1,5 +1,12 @@
 # MVP verification
 
+## 2026-10-02 — Production update
+
+- Published tested source commit `c22e8d2` to the existing `cg / Hobby` project `wearwell-demo` using the official Vercel CLI and static `dist/` files. Production alias remains https://wearwell-demo.vercel.app/; deployment: https://wearwell-demo-inmrkpnjw-cg-cf62.vercel.app/ . Vercel reported READY and assigned the original production domain.
+- Upload inspection excluded `.env.local`, `.gitignore` and `.vercel`. Static configuration skips package installation/build commands on Vercel. No paid plan or service was enabled.
+- Public browser smoke test without Vercel authentication: Chinese welcome, random-demo action into weather setup, Back to exactly 100 owned rows, English button label and switching back to Chinese. No captured console errors. Existing local regression results: 114 passing tests and successful production build.
+- GitHub remains unconnected to this Vercel project; future pushes still require an explicit deployment.
+
 ## 2026-10-02 — One-click random demo wardrobe
 
 - Closet adds 100 random unowned variants in one state update, preserving existing items, ratings, saved looks and comfort preferences. Sampling covers available archetypes first (including summer and winter garments, shoes and accessories), balances color coverage, then fills the remainder. The button shows a smaller count near catalog exhaustion and disables when complete. A local bulk event records the added count. Both languages are supported.

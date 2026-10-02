@@ -152,7 +152,9 @@ npm run format:check  # source formatting
 
 ## Deploy on Vercel Hobby
 
-The published demo uses **Drop to Deploy**: the locally tested `dist/` build is uploaded directly to the existing Hobby workspace. This requires no additional GitHub App permissions. It is a static snapshot; pushing to GitHub does **not** automatically redeploy this demo. Rebuild and upload `dist/` to update it.
+The published demo is a static snapshot in the existing **cg / Hobby** workspace. It was initially created with **Drop to Deploy** and updated on October 2, 2026 through the official Vercel CLI, publishing the tested `dist/` output to the same `wearwell-demo` project. Chinese/English switching and the random 100-piece demo shortcut are live. No additional GitHub App permissions or paid add-ons were added. Pushing to GitHub does **not** automatically redeploy this demo.
+
+To repeat a static CLI deployment, run tests and the production build, then link `dist/` to the existing project with `vercel link --yes --scope cg-cf62 --project wearwell-demo --cwd dist`. Place a separate `vercel.json` inside `dist/` with `{"framework":null,"buildCommand":"","installCommand":"","outputDirectory":"."}` so the already-built files are served directly. Inspect uploads with `vercel deploy --dry --cwd dist`, then publish with `vercel deploy --prod --yes --cwd dist --scope cg-cf62 --local-config vercel.json`. Keep `.env*` and `.vercel` excluded; the root configuration below is for source builds, not this static upload.
 
 For a future Git-connected deployment, import this repository into an existing **Hobby** workspace. `vercel.json` declares:
 
